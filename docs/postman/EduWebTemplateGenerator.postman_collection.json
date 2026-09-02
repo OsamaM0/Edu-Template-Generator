@@ -1,0 +1,1077 @@
+{
+  "info": {
+    "_postman_id": "b7e1c0a2-4f3d-4e7a-9c21-ed0a1f6c5d10",
+    "name": "EduWebTemplateGenerator — Render API",
+    "description": "أرسل بيانات ورقة العمل (JSON) واستقبل صفحة HTML جاهزة ومعبّأة بالبيانات.\n\nSend worksheet JSON, get back a finished HTML page filled with that data.\n\n**Start the server**: `npm start` → http://localhost:8138\n\n**Variables**: `baseUrl` (default `http://localhost:8138`), `apiKey` (only needed when the\nserver runs with `EDU_API_KEY` set), `sheetId` (filled automatically by *Store a sheet*).\n\nFull documentation: `docs/API.md`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-Api-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8138",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "sheetId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 · الحالة والقوالب — Health & templates",
+      "description": "فحص سريع للخادم ومعرفة القوالب المتاحة وما يقبله كل قالب.",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "هل الخادم يعمل؟ يعيد الإصدار وقائمة القوالب وعدد الصفحات المخزنة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the server is up\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"every template is registered\", () => {",
+                  "  pm.expect(pm.response.json().templates).to.include.members([",
+                  "    \"worksheet\", \"interactive-card\", \"interactive-card-answers\",",
+                  "    \"differentiated-lesson\", \"golden-minutes\", \"learning-pattern\"",
+                  "  ]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/templates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "templates"
+              ]
+            },
+            "description": "القوالب الأربعة، وأسماؤها البديلة، والكتل (blocks) التي يقبلها كل قالب — نقطة البداية لأي مولّد محتوى آلي."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 · التحقق — Validate",
+      "description": "تحقق من صحة البنية قبل التصيير. مفيد داخل حلقة توليد آلي (AI) قبل عرض أي شيء.",
+      "item": [
+        {
+          "name": "POST /api/validate — بيانات صحيحة",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "validate"
+              ]
+            },
+            "description": "يعيد 200 مع القالب المكتشَف وأي ملاحظات (warnings) لا تمنع التصيير.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"differentiated-lesson\",\n    \"age\": \"pro\",\n    \"color\": \"teal\",\n    \"title\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"subtitle\": \"وفق التعليم المتمايز\",\n    \"banner\": \"تعليم يتنوع ليلبي احتياجات كل متعلم .. ويقود إلى تعلم فعّال\",\n    \"pageTitle\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"formula\": {\n      \"lines\": [\n        \"ax + b = c\",\n        \"x = (c − b) ÷ a\"\n      ],\n      \"icon\": \"💡\"\n    },\n    \"art\": \"📚\"\n  },\n  \"info\": [\n    {\n      \"icon\": \"target\",\n      \"label\": \"الفئة المستهدفة\",\n      \"value\": \"الصف الأول المتوسط\"\n    },\n    {\n      \"icon\": \"calendar\",\n      \"label\": \"الزمن\",\n      \"value\": \"حصتان (90 دقيقة)\"\n    },\n    {\n      \"icon\": \"level\",\n      \"label\": \"المادة\",\n      \"value\": \"رياضيات\"\n    },\n    {\n      \"icon\": \"book\",\n      \"label\": \"الموضوع\",\n      \"value\": \"حل المعادلات من الدرجة الأولى\"\n    }\n  ],\n  \"goals\": {\n    \"title\": \"الأهداف\",\n    \"icon\": \"target\",\n    \"color\": \"green\",\n    \"groups\": [\n      {\n        \"icon\": \"book\",\n        \"title\": \"معرفية\",\n        \"items\": [\n          \"يتعرف مفهوم المعادلة من الدرجة الأولى.\",\n          \"يحدد خطوات حل المعادلات من الدرجة الأولى.\"\n        ]\n      },\n      {\n        \"icon\": \"pencil\",\n        \"title\": \"مهارية\",\n        \"items\": [\n          \"يحل معادلات من الدرجة الأولى بخطوات صحيحة.\",\n          \"يوظف الحل في مواقف حياتية بسيطة.\"\n        ]\n      },\n      {\n        \"icon\": \"heart\",\n        \"title\": \"وجدانية\",\n        \"items\": [\n          \"يُظهر دافعية للمشاركة والتعلم.\",\n          \"يقدر أهمية الرياضيات في الحياة اليومية.\"\n        ]\n      }\n    ]\n  },\n  \"strategies\": {\n    \"title\": \"استراتيجيات التعليم المتمايز\",\n    \"icon\": \"puzzle\",\n    \"color\": \"teal\",\n    \"items\": [\n      \"التعلم حسب مستوى الاستعداد\",\n      \"تنويع المحتوى والأنشطة\",\n      \"تنويع طرق العرض والشرح\",\n      \"التعلم التعاوني\",\n      \"التقويم المستمر والتغذية الراجعة\"\n    ]\n  },\n  \"tools\": {\n    \"title\": \"الوسائل التعليمية\",\n    \"icon\": \"computer\",\n    \"color\": \"blue\",\n    \"items\": [\n      \"عروض تفاعلية (بوربوينت)\",\n      \"بطاقات تعليمية ملونة\",\n      \"أوراق عمل متدرجة\",\n      \"سبورة ذكية\",\n      \"تطبيقات تعليمية\"\n    ]\n  },\n  \"homework\": {\n    \"title\": \"الواجب المنزلي المتمايز\",\n    \"icon\": \"notebook\",\n    \"color\": \"yellow\",\n    \"items\": [\n      {\n        \"level\": \"advanced\",\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"المجموعة المتقدمة\",\n        \"text\": \"مسائل إضافية وتحدي. ابحث عن تطبيقات للمعادلات.\"\n      },\n      {\n        \"level\": \"middle\",\n        \"icon\": \"🧑\",\n        \"label\": \"المجموعة المتوسطة\",\n        \"text\": \"حل ورقة عمل متدرجة. مسائل من الكتاب المدرسي.\"\n      },\n      {\n        \"level\": \"basic\",\n        \"icon\": \"👶\",\n        \"label\": \"المجموعة الأساسية\",\n        \"text\": \"ورقة عمل مبسطة. مشاهدة فيديو تعليمي قصير.\"\n      }\n    ]\n  },\n  \"groups\": {\n    \"title\": \"تقسيم المجموعات وفق التعليم المتمايز\",\n    \"icon\": \"users\",\n    \"items\": [\n      {\n        \"level\": \"basic\",\n        \"name\": \"المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"items\": [\n          \"تمتلك استعداداً منخفضاً.\",\n          \"تحتاج إلى دعم كبير ومستمر.\",\n          \"تحتاج إلى أنشطة مبسطة وخطوات إرشادية واضحة.\"\n        ]\n      },\n      {\n        \"level\": \"middle\",\n        \"name\": \"المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"items\": [\n          \"تمتلك استعداداً متوسطاً.\",\n          \"تحتاج إلى دعم وتوجيه.\",\n          \"تحتاج إلى أنشطة تطبيقية متدرجة الصعوبة.\"\n        ]\n      },\n      {\n        \"level\": \"advanced\",\n        \"name\": \"المجموعة المتقدمة\",\n        \"icon\": \"user-check\",\n        \"items\": [\n          \"تمتلك استعداداً مرتفعاً.\",\n          \"تسعى للتحدي والبحث.\",\n          \"تحتاج إلى أنشطة إثرائية ومسائل غير روتينية.\"\n        ]\n      }\n    ]\n  },\n  \"intro\": {\n    \"title\": \"تمهيد (5 دقائق)\",\n    \"icon\": \"star\",\n    \"color\": \"yellow\",\n    \"art\": \"📚\",\n    \"text\": \"عرض موقف حياتي: اشتريت كتاباً ثمنه «س»، ودفعت مبلغ 25، وكان الباقي 10، ما المعادلة التي تمثل الموقف؟ وما قيمة «س»؟\",\n    \"equation\": \"س + 10 = 25\"\n  },\n  \"activities\": {\n    \"title\": \"الأنشطة التعليمية المتمايزة (60 دقيقة)\",\n    \"icon\": \"puzzle\",\n    \"color\": \"purple\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"أنشطة المجموعة الأساسية\",\n        \"items\": [\n          \"حل معادلات بخطوة واحدة.\",\n          \"استخدام بطاقات خطوات الحل.\",\n          \"العمل مع المعلم بشكل مباشر.\"\n        ],\n        \"example\": {\n          \"icon\": \"🙋\",\n          \"label\": \"مثال:\",\n          \"text\": \"x + 7 = 12\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"أنشطة المجموعة المتوسطة\",\n        \"items\": [\n          \"حل معادلات من خطوتين.\",\n          \"مسائل تطبيقية بسيطة.\",\n          \"العمل في مجموعات تعاونية لمناقشة الحل.\"\n        ],\n        \"example\": {\n          \"icon\": \"👥\",\n          \"label\": \"مثال:\",\n          \"text\": \"2x + 5 = 17\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"أنشطة المجموعة المتقدمة\",\n        \"items\": [\n          \"حل معادلات تحتوي على كسور وأقواس.\",\n          \"مسائل تطبيقية من واقع الحياة.\",\n          \"تحدي: صمم معادلة وحلها لزميلك.\"\n        ],\n        \"example\": {\n          \"icon\": \"🏆\",\n          \"label\": \"مثال:\",\n          \"text\": \"3(x − 2) + 4 = 2x + 10\"\n        }\n      }\n    ]\n  },\n  \"assessment\": {\n    \"title\": \"التقويم المتمايز (20 دقيقة)\",\n    \"icon\": \"clipboard-check\",\n    \"color\": \"teal\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"تقويم المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"text\": \"مسائل بخطوة واحدة مع توجيه مباشر.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"x − 6 = 9\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"تقويم المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"text\": \"مسائل من خطوتين مع دعم حل بعض الخطوات.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"3x − 4 = 14\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"تقويم المجموعة المتقدمة\",\n        \"icon\": \"trophy\",\n        \"text\": \"مسائل مركبة وتطبيقات حياتية تتطلب تفكيراً عالياً.\",\n        \"example\": {\n          \"label\": \"أوجد قيمة س:\",\n          \"text\": \"4(x + 3) − 2 = 2(x − 1) + 8\"\n        }\n      }\n    ]\n  },\n  \"closing\": [\n    {\n      \"icon\": \"check\",\n      \"title\": \"الخاتمة (5 دقائق)\",\n      \"deco\": \"🎉\",\n      \"color\": \"teal\",\n      \"items\": [\n        \"مراجعة سريعة لأهم النقاط.\",\n        \"تشجيع المتعلمين وتقدير جهودهم.\"\n      ],\n      \"note\": \"سؤال ختامي: ما الخطوة التي ساعدتك أكثر في حل المعادلة؟\"\n    },\n    {\n      \"icon\": \"users\",\n      \"title\": \"دعم إضافي للمتعثرين\",\n      \"deco\": \"🌱\",\n      \"color\": \"blue\",\n      \"items\": [\n        \"إعادة شرح مبسط مع مخططات توضيحية.\",\n        \"استخدام أمثلة قريبة من واقعهم.\",\n        \"وقت إضافي وممارسة موجهة.\"\n      ]\n    },\n    {\n      \"icon\": \"star\",\n      \"title\": \"إثراءات للمتقدمين\",\n      \"deco\": \"🎯\",\n      \"color\": \"red\",\n      \"items\": [\n        \"مسائل تحدٍّ ومسابقات رياضية.\",\n        \"ربط المعادلات بالجبر والهندسة.\",\n        \"استخدام استراتيجيات متنوعة للحل.\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"valid\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().valid).to.be.true;",
+                  "  pm.expect(pm.response.json().template).to.eql(\"differentiated-lesson\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/validate — بيانات ناقصة (422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/validate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "validate"
+              ]
+            },
+            "description": "قالب البطاقات بلا مصفوفة cards ⇒ 422 مع رسالة الخطأ. الأخطاء تمنع التصيير، والملاحظات لا تمنعه.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"interactive-card\",\n    \"title\": \"بطاقات بلا محتوى\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"rejected with a reason\", () => {",
+                  "  pm.response.to.have.status(422);",
+                  "  pm.expect(pm.response.json().errors[0]).to.include(\"cards\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · التصيير — Render a page",
+      "description": "الطلب الأساسي: ترسل JSON وتستقبل صفحة HTML كاملة ومعبّأة.\n\nالاستجابة `text/html`، مع ترويستين تخبرانك بما تم تصييره:\n`X-Edu-Template` و `X-Edu-Theme`.\n\nفي Postman استخدم تبويب **Preview** لرؤية الصفحة كما تظهر في المتصفح.",
+      "item": [
+        {
+          "name": "POST /api/render — ورقة عمل (worksheet)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "ورقة عمل الطالب كاملة. الجسم هنا هو كائن ورقة العمل مباشرة، بلا أي غلاف.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"badge\": \"ورقة عمل\",\n    \"title\": \"حاجات المخلوقات الحية\",\n    \"pageTitle\": \"ورقة عمل — حاجات المخلوقات الحية\",\n    \"decor\": {\n      \"right\": [\n        \"🪴\"\n      ],\n      \"left\": [\n        \"🌳\",\n        \"🐇\"\n      ]\n    }\n  },\n  \"studentBar\": [\n    {\n      \"icon\": \"👤\",\n      \"label\": \"اسم الطالب / الطالبة\"\n    },\n    {\n      \"icon\": \"🎓\",\n      \"label\": \"الصف\"\n    },\n    {\n      \"icon\": \"📅\",\n      \"label\": \"التاريخ\"\n    }\n  ],\n  \"info\": {\n    \"color\": \"yellow\",\n    \"rows\": [\n      {\n        \"icon\": \"🧪\",\n        \"label\": \"المادة\",\n        \"value\": \"علوم\"\n      },\n      {\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"الصف\",\n        \"value\": \"ثاني ابتدائي\"\n      },\n      {\n        \"icon\": \"📅\",\n        \"label\": \"الفصل الدراسي\",\n        \"value\": \"الأول\"\n      },\n      {\n        \"icon\": \"📖\",\n        \"label\": \"الوحدة\",\n        \"value\": \"النبات والحيوان\"\n      },\n      {\n        \"icon\": \"🎯\",\n        \"label\": \"عنوان الدرس\",\n        \"value\": \"حاجات المخلوقات الحية\"\n      }\n    ]\n  },\n  \"warmup\": {\n    \"title\": \"تهيئة\",\n    \"titleIcon\": \"💡\",\n    \"color\": \"orange\",\n    \"text\": \"كل مخلوق حي يحتاج إلى أشياء تساعده على العيش والنمو. ما الأشياء التي تحتاجها أنت لتعيش بصحة وسعادة؟\",\n    \"mascot\": \"💧\"\n  },\n  \"objectives\": {\n    \"title\": \"أهداف التعلم\",\n    \"titleIcon\": \"🎯\",\n    \"color\": \"green\",\n    \"image\": \"🌱\",\n    \"items\": [\n      \"أتعرف حاجات المخلوقات الحية الأساسية.\",\n      \"أذكر أمثلة على حاجات الحيوانات والنباتات.\",\n      \"أصنف حاجات المخلوقات الحية.\"\n    ]\n  },\n  \"sections\": [\n    {\n      \"type\": \"choose\",\n      \"number\": 1,\n      \"color\": \"blue\",\n      \"title\": \"أختر الإجابة الصحيحة\",\n      \"instruction\": \"اختر الحاجة التي يحتاجها الحيوان للبقاء حياً.\",\n      \"rows\": [\n        {\n          \"subject\": {\n            \"image\": \"🦁\",\n            \"label\": \"الأسد\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🪵\",\n              \"label\": \"خشب\"\n            },\n            {\n              \"image\": \"🥩\",\n              \"label\": \"لحم\"\n            },\n            {\n              \"image\": \"💧\",\n              \"label\": \"ماء\"\n            }\n          ]\n        },\n        {\n          \"subject\": {\n            \"image\": \"🐤\",\n            \"label\": \"العصفور\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🪹\",\n              \"label\": \"عش\"\n            },\n            {\n              \"image\": \"💧\",\n              \"label\": \"ماء\"\n            },\n            {\n              \"image\": \"🌾\",\n              \"label\": \"حبوب\"\n            }\n          ]\n        },\n        {\n          \"subject\": {\n            \"image\": \"🐟\",\n            \"label\": \"السمكة\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🌊\",\n              \"label\": \"ماء\"\n            },\n            {\n              \"image\": \"🌿\",\n              \"label\": \"نباتات\"\n            },\n            {\n              \"image\": \"🪨\",\n              \"label\": \"صخور\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"type\": \"fill-blank\",\n      \"number\": 2,\n      \"color\": \"sky\",\n      \"title\": \"أكمل الفراغ\",\n      \"instruction\": \"أكمل الجمل بالكلمة المناسبة من الصندوق.\",\n      \"wordBank\": [\n        \"الماء\",\n        \"الهواء\",\n        \"الغذاء\",\n        \"المأوى\"\n      ],\n      \"items\": [\n        {\n          \"icon\": \"💧\",\n          \"text\": \"تحتاج الحيوانات إلى ___ للشرب.\"\n        },\n        {\n          \"icon\": \"🌱\",\n          \"text\": \"تحتاج النباتات إلى ___ لتنمو.\"\n        },\n        {\n          \"icon\": \"💨\",\n          \"text\": \"تتنفس الحيوانات والإنسان ___.\"\n        },\n        {\n          \"icon\": \"🪹\",\n          \"text\": \"الطيور تبني أعشاشاً لتوفر لها ___.\"\n        }\n      ]\n    },\n    {\n      \"type\": \"matching\",\n      \"number\": 3,\n      \"color\": \"purple\",\n      \"title\": \"صل كل مخلوق حي بحاجته المناسبة\",\n      \"needs\": [\n        {\n          \"label\": \"الماء\"\n        },\n        {\n          \"label\": \"الهواء\"\n        },\n        {\n          \"label\": \"الغذاء\"\n        },\n        {\n          \"label\": \"المأوى\"\n        }\n      ],\n      \"creatures\": [\n        {\n          \"image\": \"🌳\",\n          \"label\": \"الشجرة\"\n        },\n        {\n          \"image\": \"🐪\",\n          \"label\": \"الجمل\"\n        },\n        {\n          \"image\": \"👦\",\n          \"label\": \"الطفل\"\n        },\n        {\n          \"image\": \"🐟\",\n          \"label\": \"السمكة\"\n        }\n      ]\n    },\n    {\n      \"type\": \"classify\",\n      \"number\": 4,\n      \"color\": \"orange\",\n      \"span\": 2,\n      \"title\": \"صنف الحاجات التالية إلى:\",\n      \"chips\": [\n        \"الماء\",\n        \"الضوء\",\n        \"السمك\",\n        \"الهواء\",\n        \"الصخور\",\n        \"الغذاء\"\n      ],\n      \"columns\": [\n        {\n          \"title\": \"حاجات حية\",\n          \"subtitle\": \"(تتنفس وتنمو)\",\n          \"icon\": \"🫁\",\n          \"color\": \"green\",\n          \"lines\": 3\n        },\n        {\n          \"title\": \"حاجات غير حية\",\n          \"subtitle\": \"(لا تتنفس)\",\n          \"icon\": \"🪨\",\n          \"color\": \"orange\",\n          \"lines\": 3\n        }\n      ]\n    },\n    {\n      \"type\": \"drawing\",\n      \"number\": 5,\n      \"color\": \"teal\",\n      \"title\": \"نشاط تفكير ورسم:\",\n      \"instruction\": \"ارسم مخلوقاً حياً واذكر حاجتين يحتاجهما ليعيش.\",\n      \"deco\": \"✏️\",\n      \"labels\": [\n        \"الحاجة الأولى\",\n        \"الحاجة الثانية\"\n      ]\n    },\n    {\n      \"type\": \"signatures\",\n      \"color\": \"blue\",\n      \"entries\": [\n        {\n          \"icon\": \"🖋️\",\n          \"role\": \"المعلم / المعلمة\",\n          \"name\": \"\"\n        },\n        {\n          \"icon\": \"🖋️\",\n          \"role\": \"مدير / مديرة المدرسة\",\n          \"name\": \"\"\n        }\n      ]\n    },\n    {\n      \"type\": \"self-assessment\",\n      \"color\": \"purple\",\n      \"title\": \"تقييم ذاتي\",\n      \"titleIcon\": \"⭐\",\n      \"prompt\": \"لوّن الوجه الذي يعبر عن فهمك للدرس:\",\n      \"options\": [\n        {\n          \"icon\": \"😊\",\n          \"label\": \"أفهم جيداً\",\n          \"color\": \"green\"\n        },\n        {\n          \"icon\": \"😐\",\n          \"label\": \"أفهم قليلاً\",\n          \"color\": \"yellow\"\n        },\n        {\n          \"icon\": \"☹️\",\n          \"label\": \"أحتاج لمساعدة\",\n          \"color\": \"red\"\n        }\n      ]\n    },\n    {\n      \"type\": \"homework\",\n      \"color\": \"pink\",\n      \"title\": \"واجب منزلي\",\n      \"titleIcon\": \"🏠\",\n      \"text\": \"ابحث في المنزل أو مع أسرتك عن مخلوق حي (نبات أو حيوان)، واكتب أربع حاجات يحتاجها ليعيش.\",\n      \"lines\": 4\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));",
+                  "pm.test(\"rendered as a worksheet\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"X-Edu-Template\")).to.eql(\"worksheet\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render?theme=pro — نفس البيانات بالنمط الاحترافي",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render?theme=pro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ],
+              "query": [
+                {
+                  "key": "theme",
+                  "value": "pro",
+                  "description": "pro | kid — يتجاوز ما في meta.age"
+                }
+              ]
+            },
+            "description": "نفس بيانات الطلب السابق تمامًا، بمظهر مختلف.\n\nهذا الدرس مكتوب بـ `meta.age: \"kid\"`، و`?theme=pro` يتجاوزه:\nلون واحد، بلا إيموجي، وخطوط أهدأ — للمرحلة المتوسطة والثانوية.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"badge\": \"ورقة عمل\",\n    \"title\": \"حاجات المخلوقات الحية\",\n    \"pageTitle\": \"ورقة عمل — حاجات المخلوقات الحية\",\n    \"decor\": {\n      \"right\": [\n        \"🪴\"\n      ],\n      \"left\": [\n        \"🌳\",\n        \"🐇\"\n      ]\n    }\n  },\n  \"studentBar\": [\n    {\n      \"icon\": \"👤\",\n      \"label\": \"اسم الطالب / الطالبة\"\n    },\n    {\n      \"icon\": \"🎓\",\n      \"label\": \"الصف\"\n    },\n    {\n      \"icon\": \"📅\",\n      \"label\": \"التاريخ\"\n    }\n  ],\n  \"info\": {\n    \"color\": \"yellow\",\n    \"rows\": [\n      {\n        \"icon\": \"🧪\",\n        \"label\": \"المادة\",\n        \"value\": \"علوم\"\n      },\n      {\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"الصف\",\n        \"value\": \"ثاني ابتدائي\"\n      },\n      {\n        \"icon\": \"📅\",\n        \"label\": \"الفصل الدراسي\",\n        \"value\": \"الأول\"\n      },\n      {\n        \"icon\": \"📖\",\n        \"label\": \"الوحدة\",\n        \"value\": \"النبات والحيوان\"\n      },\n      {\n        \"icon\": \"🎯\",\n        \"label\": \"عنوان الدرس\",\n        \"value\": \"حاجات المخلوقات الحية\"\n      }\n    ]\n  },\n  \"warmup\": {\n    \"title\": \"تهيئة\",\n    \"titleIcon\": \"💡\",\n    \"color\": \"orange\",\n    \"text\": \"كل مخلوق حي يحتاج إلى أشياء تساعده على العيش والنمو. ما الأشياء التي تحتاجها أنت لتعيش بصحة وسعادة؟\",\n    \"mascot\": \"💧\"\n  },\n  \"objectives\": {\n    \"title\": \"أهداف التعلم\",\n    \"titleIcon\": \"🎯\",\n    \"color\": \"green\",\n    \"image\": \"🌱\",\n    \"items\": [\n      \"أتعرف حاجات المخلوقات الحية الأساسية.\",\n      \"أذكر أمثلة على حاجات الحيوانات والنباتات.\",\n      \"أصنف حاجات المخلوقات الحية.\"\n    ]\n  },\n  \"sections\": [\n    {\n      \"type\": \"choose\",\n      \"number\": 1,\n      \"color\": \"blue\",\n      \"title\": \"أختر الإجابة الصحيحة\",\n      \"instruction\": \"اختر الحاجة التي يحتاجها الحيوان للبقاء حياً.\",\n      \"rows\": [\n        {\n          \"subject\": {\n            \"image\": \"🦁\",\n            \"label\": \"الأسد\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🪵\",\n              \"label\": \"خشب\"\n            },\n            {\n              \"image\": \"🥩\",\n              \"label\": \"لحم\"\n            },\n            {\n              \"image\": \"💧\",\n              \"label\": \"ماء\"\n            }\n          ]\n        },\n        {\n          \"subject\": {\n            \"image\": \"🐤\",\n            \"label\": \"العصفور\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🪹\",\n              \"label\": \"عش\"\n            },\n            {\n              \"image\": \"💧\",\n              \"label\": \"ماء\"\n            },\n            {\n              \"image\": \"🌾\",\n              \"label\": \"حبوب\"\n            }\n          ]\n        },\n        {\n          \"subject\": {\n            \"image\": \"🐟\",\n            \"label\": \"السمكة\"\n          },\n          \"options\": [\n            {\n              \"image\": \"🌊\",\n              \"label\": \"ماء\"\n            },\n            {\n              \"image\": \"🌿\",\n              \"label\": \"نباتات\"\n            },\n            {\n              \"image\": \"🪨\",\n              \"label\": \"صخور\"\n            }\n          ]\n        }\n      ]\n    },\n    {\n      \"type\": \"fill-blank\",\n      \"number\": 2,\n      \"color\": \"sky\",\n      \"title\": \"أكمل الفراغ\",\n      \"instruction\": \"أكمل الجمل بالكلمة المناسبة من الصندوق.\",\n      \"wordBank\": [\n        \"الماء\",\n        \"الهواء\",\n        \"الغذاء\",\n        \"المأوى\"\n      ],\n      \"items\": [\n        {\n          \"icon\": \"💧\",\n          \"text\": \"تحتاج الحيوانات إلى ___ للشرب.\"\n        },\n        {\n          \"icon\": \"🌱\",\n          \"text\": \"تحتاج النباتات إلى ___ لتنمو.\"\n        },\n        {\n          \"icon\": \"💨\",\n          \"text\": \"تتنفس الحيوانات والإنسان ___.\"\n        },\n        {\n          \"icon\": \"🪹\",\n          \"text\": \"الطيور تبني أعشاشاً لتوفر لها ___.\"\n        }\n      ]\n    },\n    {\n      \"type\": \"matching\",\n      \"number\": 3,\n      \"color\": \"purple\",\n      \"title\": \"صل كل مخلوق حي بحاجته المناسبة\",\n      \"needs\": [\n        {\n          \"label\": \"الماء\"\n        },\n        {\n          \"label\": \"الهواء\"\n        },\n        {\n          \"label\": \"الغذاء\"\n        },\n        {\n          \"label\": \"المأوى\"\n        }\n      ],\n      \"creatures\": [\n        {\n          \"image\": \"🌳\",\n          \"label\": \"الشجرة\"\n        },\n        {\n          \"image\": \"🐪\",\n          \"label\": \"الجمل\"\n        },\n        {\n          \"image\": \"👦\",\n          \"label\": \"الطفل\"\n        },\n        {\n          \"image\": \"🐟\",\n          \"label\": \"السمكة\"\n        }\n      ]\n    },\n    {\n      \"type\": \"classify\",\n      \"number\": 4,\n      \"color\": \"orange\",\n      \"span\": 2,\n      \"title\": \"صنف الحاجات التالية إلى:\",\n      \"chips\": [\n        \"الماء\",\n        \"الضوء\",\n        \"السمك\",\n        \"الهواء\",\n        \"الصخور\",\n        \"الغذاء\"\n      ],\n      \"columns\": [\n        {\n          \"title\": \"حاجات حية\",\n          \"subtitle\": \"(تتنفس وتنمو)\",\n          \"icon\": \"🫁\",\n          \"color\": \"green\",\n          \"lines\": 3\n        },\n        {\n          \"title\": \"حاجات غير حية\",\n          \"subtitle\": \"(لا تتنفس)\",\n          \"icon\": \"🪨\",\n          \"color\": \"orange\",\n          \"lines\": 3\n        }\n      ]\n    },\n    {\n      \"type\": \"drawing\",\n      \"number\": 5,\n      \"color\": \"teal\",\n      \"title\": \"نشاط تفكير ورسم:\",\n      \"instruction\": \"ارسم مخلوقاً حياً واذكر حاجتين يحتاجهما ليعيش.\",\n      \"deco\": \"✏️\",\n      \"labels\": [\n        \"الحاجة الأولى\",\n        \"الحاجة الثانية\"\n      ]\n    },\n    {\n      \"type\": \"signatures\",\n      \"color\": \"blue\",\n      \"entries\": [\n        {\n          \"icon\": \"🖋️\",\n          \"role\": \"المعلم / المعلمة\",\n          \"name\": \"\"\n        },\n        {\n          \"icon\": \"🖋️\",\n          \"role\": \"مدير / مديرة المدرسة\",\n          \"name\": \"\"\n        }\n      ]\n    },\n    {\n      \"type\": \"self-assessment\",\n      \"color\": \"purple\",\n      \"title\": \"تقييم ذاتي\",\n      \"titleIcon\": \"⭐\",\n      \"prompt\": \"لوّن الوجه الذي يعبر عن فهمك للدرس:\",\n      \"options\": [\n        {\n          \"icon\": \"😊\",\n          \"label\": \"أفهم جيداً\",\n          \"color\": \"green\"\n        },\n        {\n          \"icon\": \"😐\",\n          \"label\": \"أفهم قليلاً\",\n          \"color\": \"yellow\"\n        },\n        {\n          \"icon\": \"☹️\",\n          \"label\": \"أحتاج لمساعدة\",\n          \"color\": \"red\"\n        }\n      ]\n    },\n    {\n      \"type\": \"homework\",\n      \"color\": \"pink\",\n      \"title\": \"واجب منزلي\",\n      \"titleIcon\": \"🏠\",\n      \"text\": \"ابحث في المنزل أو مع أسرتك عن مخلوق حي (نبات أو حيوان)، واكتب أربع حاجات يحتاجها ليعيش.\",\n      \"lines\": 4\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));",
+                  "pm.test(\"the URL overrode the JSON\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"X-Edu-Theme\")).to.eql(\"pro\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — خطة درس متمايزة (differentiated-lesson)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "خطة درس وفق التعليم المتمايز: الأهداف والاستراتيجيات والوسائل والواجب، ثم المجموعات والأنشطة والتقويم المتمايز.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"differentiated-lesson\",\n    \"age\": \"pro\",\n    \"color\": \"teal\",\n    \"title\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"subtitle\": \"وفق التعليم المتمايز\",\n    \"banner\": \"تعليم يتنوع ليلبي احتياجات كل متعلم .. ويقود إلى تعلم فعّال\",\n    \"pageTitle\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"formula\": {\n      \"lines\": [\n        \"ax + b = c\",\n        \"x = (c − b) ÷ a\"\n      ],\n      \"icon\": \"💡\"\n    },\n    \"art\": \"📚\"\n  },\n  \"info\": [\n    {\n      \"icon\": \"target\",\n      \"label\": \"الفئة المستهدفة\",\n      \"value\": \"الصف الأول المتوسط\"\n    },\n    {\n      \"icon\": \"calendar\",\n      \"label\": \"الزمن\",\n      \"value\": \"حصتان (90 دقيقة)\"\n    },\n    {\n      \"icon\": \"level\",\n      \"label\": \"المادة\",\n      \"value\": \"رياضيات\"\n    },\n    {\n      \"icon\": \"book\",\n      \"label\": \"الموضوع\",\n      \"value\": \"حل المعادلات من الدرجة الأولى\"\n    }\n  ],\n  \"goals\": {\n    \"title\": \"الأهداف\",\n    \"icon\": \"target\",\n    \"color\": \"green\",\n    \"groups\": [\n      {\n        \"icon\": \"book\",\n        \"title\": \"معرفية\",\n        \"items\": [\n          \"يتعرف مفهوم المعادلة من الدرجة الأولى.\",\n          \"يحدد خطوات حل المعادلات من الدرجة الأولى.\"\n        ]\n      },\n      {\n        \"icon\": \"pencil\",\n        \"title\": \"مهارية\",\n        \"items\": [\n          \"يحل معادلات من الدرجة الأولى بخطوات صحيحة.\",\n          \"يوظف الحل في مواقف حياتية بسيطة.\"\n        ]\n      },\n      {\n        \"icon\": \"heart\",\n        \"title\": \"وجدانية\",\n        \"items\": [\n          \"يُظهر دافعية للمشاركة والتعلم.\",\n          \"يقدر أهمية الرياضيات في الحياة اليومية.\"\n        ]\n      }\n    ]\n  },\n  \"strategies\": {\n    \"title\": \"استراتيجيات التعليم المتمايز\",\n    \"icon\": \"puzzle\",\n    \"color\": \"teal\",\n    \"items\": [\n      \"التعلم حسب مستوى الاستعداد\",\n      \"تنويع المحتوى والأنشطة\",\n      \"تنويع طرق العرض والشرح\",\n      \"التعلم التعاوني\",\n      \"التقويم المستمر والتغذية الراجعة\"\n    ]\n  },\n  \"tools\": {\n    \"title\": \"الوسائل التعليمية\",\n    \"icon\": \"computer\",\n    \"color\": \"blue\",\n    \"items\": [\n      \"عروض تفاعلية (بوربوينت)\",\n      \"بطاقات تعليمية ملونة\",\n      \"أوراق عمل متدرجة\",\n      \"سبورة ذكية\",\n      \"تطبيقات تعليمية\"\n    ]\n  },\n  \"homework\": {\n    \"title\": \"الواجب المنزلي المتمايز\",\n    \"icon\": \"notebook\",\n    \"color\": \"yellow\",\n    \"items\": [\n      {\n        \"level\": \"advanced\",\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"المجموعة المتقدمة\",\n        \"text\": \"مسائل إضافية وتحدي. ابحث عن تطبيقات للمعادلات.\"\n      },\n      {\n        \"level\": \"middle\",\n        \"icon\": \"🧑\",\n        \"label\": \"المجموعة المتوسطة\",\n        \"text\": \"حل ورقة عمل متدرجة. مسائل من الكتاب المدرسي.\"\n      },\n      {\n        \"level\": \"basic\",\n        \"icon\": \"👶\",\n        \"label\": \"المجموعة الأساسية\",\n        \"text\": \"ورقة عمل مبسطة. مشاهدة فيديو تعليمي قصير.\"\n      }\n    ]\n  },\n  \"groups\": {\n    \"title\": \"تقسيم المجموعات وفق التعليم المتمايز\",\n    \"icon\": \"users\",\n    \"items\": [\n      {\n        \"level\": \"basic\",\n        \"name\": \"المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"items\": [\n          \"تمتلك استعداداً منخفضاً.\",\n          \"تحتاج إلى دعم كبير ومستمر.\",\n          \"تحتاج إلى أنشطة مبسطة وخطوات إرشادية واضحة.\"\n        ]\n      },\n      {\n        \"level\": \"middle\",\n        \"name\": \"المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"items\": [\n          \"تمتلك استعداداً متوسطاً.\",\n          \"تحتاج إلى دعم وتوجيه.\",\n          \"تحتاج إلى أنشطة تطبيقية متدرجة الصعوبة.\"\n        ]\n      },\n      {\n        \"level\": \"advanced\",\n        \"name\": \"المجموعة المتقدمة\",\n        \"icon\": \"user-check\",\n        \"items\": [\n          \"تمتلك استعداداً مرتفعاً.\",\n          \"تسعى للتحدي والبحث.\",\n          \"تحتاج إلى أنشطة إثرائية ومسائل غير روتينية.\"\n        ]\n      }\n    ]\n  },\n  \"intro\": {\n    \"title\": \"تمهيد (5 دقائق)\",\n    \"icon\": \"star\",\n    \"color\": \"yellow\",\n    \"art\": \"📚\",\n    \"text\": \"عرض موقف حياتي: اشتريت كتاباً ثمنه «س»، ودفعت مبلغ 25، وكان الباقي 10، ما المعادلة التي تمثل الموقف؟ وما قيمة «س»؟\",\n    \"equation\": \"س + 10 = 25\"\n  },\n  \"activities\": {\n    \"title\": \"الأنشطة التعليمية المتمايزة (60 دقيقة)\",\n    \"icon\": \"puzzle\",\n    \"color\": \"purple\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"أنشطة المجموعة الأساسية\",\n        \"items\": [\n          \"حل معادلات بخطوة واحدة.\",\n          \"استخدام بطاقات خطوات الحل.\",\n          \"العمل مع المعلم بشكل مباشر.\"\n        ],\n        \"example\": {\n          \"icon\": \"🙋\",\n          \"label\": \"مثال:\",\n          \"text\": \"x + 7 = 12\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"أنشطة المجموعة المتوسطة\",\n        \"items\": [\n          \"حل معادلات من خطوتين.\",\n          \"مسائل تطبيقية بسيطة.\",\n          \"العمل في مجموعات تعاونية لمناقشة الحل.\"\n        ],\n        \"example\": {\n          \"icon\": \"👥\",\n          \"label\": \"مثال:\",\n          \"text\": \"2x + 5 = 17\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"أنشطة المجموعة المتقدمة\",\n        \"items\": [\n          \"حل معادلات تحتوي على كسور وأقواس.\",\n          \"مسائل تطبيقية من واقع الحياة.\",\n          \"تحدي: صمم معادلة وحلها لزميلك.\"\n        ],\n        \"example\": {\n          \"icon\": \"🏆\",\n          \"label\": \"مثال:\",\n          \"text\": \"3(x − 2) + 4 = 2x + 10\"\n        }\n      }\n    ]\n  },\n  \"assessment\": {\n    \"title\": \"التقويم المتمايز (20 دقيقة)\",\n    \"icon\": \"clipboard-check\",\n    \"color\": \"teal\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"تقويم المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"text\": \"مسائل بخطوة واحدة مع توجيه مباشر.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"x − 6 = 9\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"تقويم المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"text\": \"مسائل من خطوتين مع دعم حل بعض الخطوات.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"3x − 4 = 14\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"تقويم المجموعة المتقدمة\",\n        \"icon\": \"trophy\",\n        \"text\": \"مسائل مركبة وتطبيقات حياتية تتطلب تفكيراً عالياً.\",\n        \"example\": {\n          \"label\": \"أوجد قيمة س:\",\n          \"text\": \"4(x + 3) − 2 = 2(x − 1) + 8\"\n        }\n      }\n    ]\n  },\n  \"closing\": [\n    {\n      \"icon\": \"check\",\n      \"title\": \"الخاتمة (5 دقائق)\",\n      \"deco\": \"🎉\",\n      \"color\": \"teal\",\n      \"items\": [\n        \"مراجعة سريعة لأهم النقاط.\",\n        \"تشجيع المتعلمين وتقدير جهودهم.\"\n      ],\n      \"note\": \"سؤال ختامي: ما الخطوة التي ساعدتك أكثر في حل المعادلة؟\"\n    },\n    {\n      \"icon\": \"users\",\n      \"title\": \"دعم إضافي للمتعثرين\",\n      \"deco\": \"🌱\",\n      \"color\": \"blue\",\n      \"items\": [\n        \"إعادة شرح مبسط مع مخططات توضيحية.\",\n        \"استخدام أمثلة قريبة من واقعهم.\",\n        \"وقت إضافي وممارسة موجهة.\"\n      ]\n    },\n    {\n      \"icon\": \"star\",\n      \"title\": \"إثراءات للمتقدمين\",\n      \"deco\": \"🎯\",\n      \"color\": \"red\",\n      \"items\": [\n        \"مسائل تحدٍّ ومسابقات رياضية.\",\n        \"ربط المعادلات بالجبر والهندسة.\",\n        \"استخدام استراتيجيات متنوعة للحل.\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — بطاقات أسئلة (interactive-card)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "بطاقات مراجعة قابلة للقص، مع خطوط القص والمقص.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"interactive-card\",\n    \"age\": \"pro\",\n    \"color\": \"#177a6c\",\n    \"badge\": \"بطاقات مراجعـة تفاعليـة\",\n    \"subtitle\": \"اللغة العربية – الصف الخامس\",\n    \"lessonLabel\": \"عنوان الدرس\",\n    \"lessonTitle\": \"أنواع الجملة\",\n    \"pageTitle\": \"بطاقات مراجعة تفاعلية — أنواع الجملة\"\n  },\n  \"identity\": [\n    {\n      \"icon\": \"user\",\n      \"label\": \"المعلم / المعلمة\",\n      \"value\": \"\"\n    },\n    {\n      \"icon\": \"school\",\n      \"label\": \"المدرسة\",\n      \"value\": \"\"\n    },\n    {\n      \"icon\": \"users\",\n      \"label\": \"الصف\",\n      \"value\": \"\"\n    }\n  ],\n  \"objectives\": {\n    \"title\": \"أهداف الدرس\",\n    \"icon\": \"target\",\n    \"items\": [\n      \"التمييز بين الجملة الاسمية والجملة الفعلية\",\n      \"تحديد المبتدأ والخبر\",\n      \"تحديد الفعل والفاعل\",\n      \"تطبيق القاعدة في أمثلة بسيطة\"\n    ]\n  },\n  \"counter\": {\n    \"label\": \"عدد البطاقات\",\n    \"value\": \"8\",\n    \"unit\": \"بطاقات\",\n    \"icon\": \"book\"\n  },\n  \"cards\": [\n    {\n      \"number\": \"01\",\n      \"tag\": \"تعريف\",\n      \"icon\": \"book\",\n      \"question\": \"ما الجملة الاسمية؟ عرّفها.\"\n    },\n    {\n      \"number\": \"02\",\n      \"tag\": \"اختيار من متعدد\",\n      \"icon\": \"list\",\n      \"question\": \"أيٌّ مما يلي جملة فعلية؟\",\n      \"options\": [\n        \"أ. الطالبُ مجتهدٌ.\",\n        \"ب. تشرقُ الشمسُ.\",\n        \"ج. الحديقةُ واسعةٌ.\",\n        \"د. الكتابُ مفيدٌ.\"\n      ]\n    },\n    {\n      \"number\": \"03\",\n      \"tag\": \"صح أو خطأ\",\n      \"icon\": \"clipboard-check\",\n      \"question\": \"الجملة التي تبدأ بفعل تكون جملة اسمية.\"\n    },\n    {\n      \"number\": \"04\",\n      \"tag\": \"إكمال\",\n      \"icon\": \"puzzle\",\n      \"question\": \"تتكوّن الجملة الاسمية من ركنين أساسيين هما:\",\n      \"fill\": \"_____ و _____\"\n    },\n    {\n      \"number\": \"05\",\n      \"tag\": \"تصنيف\",\n      \"icon\": \"funnel\",\n      \"question\": \"صنّف الجمل الآتية إلى جملة اسمية أو جملة فعلية.\",\n      \"bullets\": [\n        \"السماءُ صافيةٌ.\",\n        \"تعلّم الطالبُ الدرسَ.\",\n        \"الرياضةُ مفيدةٌ.\"\n      ]\n    },\n    {\n      \"number\": \"06\",\n      \"tag\": \"تطبيق\",\n      \"icon\": \"notebook\",\n      \"question\": \"حوّل الجملة الاسمية الآتية إلى جملة فعلية بحيث يبقى المعنى مناسبًا. الحديقةُ جميلةٌ.\"\n    },\n    {\n      \"number\": \"07\",\n      \"tag\": \"استخراج\",\n      \"icon\": \"search\",\n      \"question\": \"استخرج الفعل والفاعل من الجملة التالية: يزرعُ الفلاحُ الأزهارَ في الحديقةِ.\"\n    },\n    {\n      \"number\": \"08\",\n      \"tag\": \"تحدٍّ\",\n      \"icon\": \"trophy\",\n      \"question\": \"اكتب جملتين من إنشائك؛ واحدةً اسميةً وأخرى فعليةً.\",\n      \"answerLabel\": \"\",\n      \"lines\": 2,\n      \"numbered\": true\n    }\n  ],\n  \"footer\": {\n    \"items\": [\n      {\n        \"icon\": \"heart\",\n        \"text\": \"أبدع وتألق\"\n      },\n      {\n        \"icon\": \"leaf\",\n        \"text\": \"تعلّم ممتع .. لغة أجمل\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — بطاقات الإجابات (interactive-card-answers)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "بطاقات الإجابات النموذجية المقابلة لبطاقات الأسئلة.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"interactive-card-answers\",\n    \"age\": \"pro\",\n    \"color\": \"#177a6c\",\n    \"badge\": \"بطاقات الإجابة\",\n    \"subtitle\": \"تحويل درس إلى بطاقات مراجعة تفاعلية\",\n    \"lessonLabel\": \"الدرس\",\n    \"lessonTitle\": \"الأمن الرقمي\",\n    \"pageTitle\": \"بطاقات الإجابة — الأمن الرقمي\"\n  },\n  \"subject\": {\n    \"icon\": \"computer\",\n    \"title\": \"المهارات الرقمية\",\n    \"subtitle\": \"الأول المتوسط\"\n  },\n  \"metaBar\": [\n    {\n      \"icon\": \"cards\",\n      \"label\": \"عدد البطاقات\",\n      \"value\": \"8 بطاقات\"\n    },\n    {\n      \"icon\": \"level\",\n      \"label\": \"المستوى\",\n      \"value\": \"متوسط\"\n    },\n    {\n      \"icon\": \"upload\",\n      \"label\": \"المستهدف\",\n      \"value\": \"طلاب الصف\"\n    },\n    {\n      \"icon\": \"school\",\n      \"label\": \"المدرسة\",\n      \"value\": \"\"\n    },\n    {\n      \"icon\": \"clock\",\n      \"label\": \"زمن النشاط\",\n      \"value\": \"45 دقيقة\"\n    }\n  ],\n  \"cards\": [\n    {\n      \"number\": 1,\n      \"icon\": \"shield-check\",\n      \"text\": \"الأمن الرقمي هو ممارسات وإجراءات لحماية الأجهزة والبيانات والمعلومات من الوصول غير المصرح به أو الاستخدام أو التغيير أو التدمير.\",\n      \"note\": {\n        \"text\": \"يشمل ذلك حماية الأجهزة والشبكات والبيانات الشخصية من المخاطر والتهديدات الإلكترونية.\"\n      },\n      \"skill\": {\n        \"value\": \"تذكر وفهم\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 2,\n      \"icon\": \"lock\",\n      \"lead\": \"كلمة مرور آمنة لأنها:\",\n      \"bullets\": [\n        \"طويلة (12 حرفًا على الأقل)\",\n        \"تحتوي أحرفًا كبيرة وصغيرة\",\n        \"تحتوي أرقامًا ورموزًا\",\n        \"غير مرتبطة بمعلومات شخصية\"\n      ],\n      \"note\": {\n        \"text\": \"كلما زاد طول كلمة المرور وتنوعت الأحرف والرموز، صار من الصعب تخمينها أو كسرها.\"\n      },\n      \"skill\": {\n        \"value\": \"تحليل\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 3,\n      \"icon\": \"lock-open\",\n      \"lead\": \"كلمة مرور ضعيفة لأنها:\",\n      \"bullets\": [\n        \"قصيرة (أقل من 8 أحرف)\",\n        \"تعتمد على الاسم\",\n        \"سهلة التخمين\",\n        \"لا تحتوي رموزًا وأرقامًا\"\n      ],\n      \"note\": {\n        \"text\": \"كلمات المرور القصيرة أو الشائعة يسهل تخمينها باستخدام برامج آلية أو التخمين البشري.\"\n      },\n      \"skill\": {\n        \"value\": \"تحليل\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 4,\n      \"icon\": \"user-check\",\n      \"lead\": \"لحماية البيانات الشخصية يجب:\",\n      \"bullets\": [\n        \"عدم مشاركتها مع الآخرين\",\n        \"استخدام كلمات مرور قوية\",\n        \"تفعيل التحقق بخطوتين\",\n        \"تحديث الأجهزة والبرامج بانتظام\"\n      ],\n      \"note\": {\n        \"text\": \"اتباع هذه الممارسات يقلل من خطر سرقة الهوية والوصول غير المصرح به للبيانات.\"\n      },\n      \"skill\": {\n        \"value\": \"تطبيق\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 5,\n      \"icon\": \"link-alert\",\n      \"lead\": \"الإجراء الصحيح:\",\n      \"text\": \"لا أضغط على الرابط، وأبلغ المعلم أو المسؤول عن التقنية.\",\n      \"note\": {\n        \"text\": \"الروابط المشبوهة قد تقود إلى مواقع ضارة لسرقة البيانات أو تثبيت برامج خبيثة.\"\n      },\n      \"skill\": {\n        \"value\": \"تطبيق\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 6,\n      \"icon\": \"globe\",\n      \"lead\": \"من علامات الرابط المشبوه:\",\n      \"bullets\": [\n        \"عنوان غير معروف أو طويل جدًا\",\n        \"وجود أخطاء إملائية\",\n        \"طلب معلومات شخصية\",\n        \"عروض غير واقعية\"\n      ],\n      \"note\": {\n        \"text\": \"هذه العلامات تدل على أن الرابط قد يكون محاولة احتيال أو تصيد لسرقة المعلومات.\"\n      },\n      \"skill\": {\n        \"value\": \"تحليل\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 7,\n      \"icon\": \"phone-lock\",\n      \"lead\": \"أهمية التحقق بخطوتين:\",\n      \"text\": \"يضيف طبقة حماية إضافية لحسابك، فلا يمكن الدخول حتى لو عُرفت كلمة المرور، مما يقلل من خطر الاختراق.\",\n      \"note\": {\n        \"text\": \"يطلب التحقق بخطوتين رمزًا مؤقتًا يُرسل إلى جوالك أو بريدك الإلكتروني.\"\n      },\n      \"skill\": {\n        \"value\": \"فهم\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    },\n    {\n      \"number\": 8,\n      \"icon\": \"key\",\n      \"lead\": \"خطوات إنشاء كلمة مرور قوية:\",\n      \"ordered\": true,\n      \"bullets\": [\n        \"استخدم 12 حرفًا على الأقل\",\n        \"ادمج أحرفًا كبيرة وصغيرة\",\n        \"أضف أرقامًا ورموزًا\",\n        \"تجنب المعلومات الشخصية\",\n        \"غيّرها بانتظام\"\n      ],\n      \"note\": {\n        \"text\": \"اتباع هذه الخطوات يجعل كلمة المرور قوية وآمنة وصعبة التخمين.\"\n      },\n      \"skill\": {\n        \"value\": \"تطبيق\"\n      },\n      \"score\": {\n        \"value\": \"1 درجة\"\n      }\n    }\n  ],\n  \"footer\": {\n    \"items\": [\n      {\n        \"icon\": \"lock\",\n        \"text\": \"تذكر: أمنك الرقمي مسؤوليتك.\"\n      },\n      {\n        \"icon\": \"shield\",\n        \"text\": \"تعلم رقمي آمن … لمستقبل أفضل\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — بطاقة الدقائق الذهبية (golden-minutes)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "بطاقة الحصة للمعلّم: بيانات الحصة، أول خمس دقائق وآخر خمس دقائق، مؤشر الجاهزية، وقرار المعلم بعد الحصة.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"golden-minutes\",\n    \"age\": \"playful\",\n    \"color\": \"teal\",\n    \"title\": \"بطاقة الدقائق الذهبية للحصة\",\n    \"pageTitle\": \"بطاقة الدقائق الذهبية للحصة\",\n    \"org\": {\n      \"title\": \"\",\n      \"subtitle\": \"\"\n    },\n    \"art\": \"🌿\",\n    \"titleDeco\": \"🌿\",\n    \"footer\": \"🤍\"\n  },\n  \"session\": {\n    \"number\": 1,\n    \"title\": \"بيانات الحصة\",\n    \"color\": \"teal\",\n    \"rows\": [\n      {\n        \"icon\": \"school\",\n        \"label\": \"اسم المدرسة\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"calendar\",\n        \"label\": \"اليوم والتاريخ\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"book\",\n        \"label\": \"المادة والصف\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"clock\",\n        \"label\": \"مدة الحصة\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"target\",\n        \"label\": \"عنوان الدرس\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"bulb\",\n        \"label\": \"ناتج التعلم الأساسي\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"brain\",\n        \"label\": \"المعرفة السابقة المطلوبة\",\n        \"value\": \"\",\n        \"wide\": true\n      },\n      {\n        \"icon\": \"question\",\n        \"label\": \"سؤال بداية الحصة\",\n        \"value\": \"\",\n        \"wide\": true\n      }\n    ]\n  },\n  \"firstFive\": {\n    \"number\": 2,\n    \"title\": \"أول خمس دقائق\",\n    \"color\": \"teal\",\n    \"items\": [\n      {\n        \"icon\": \"clipboard\",\n        \"label\": \"الدقيقة الأولى\",\n        \"text\": \"الاستعداد\"\n      },\n      {\n        \"icon\": \"question\",\n        \"label\": \"الدقيقة الثانية\",\n        \"text\": \"سؤال محفز\"\n      },\n      {\n        \"icon\": \"brain\",\n        \"label\": \"الدقيقة الثالثة\",\n        \"text\": \"استدعاء المعرفة السابقة\"\n      },\n      {\n        \"icon\": \"star\",\n        \"label\": \"الدقيقة الرابعة\",\n        \"text\": \"ناتج التعلم\",\n        \"sub\": \"في نهاية الحصة سأستطيع أن...\"\n      },\n      {\n        \"icon\": \"rocket\",\n        \"label\": \"الدقيقة الخامسة\",\n        \"text\": \"مهمة الانطلاق\"\n      }\n    ]\n  },\n  \"readiness\": {\n    \"number\": 3,\n    \"title\": \"مؤشر جاهزية الطلاب\",\n    \"color\": \"green\",\n    \"deco\": \"🤍🌿\",\n    \"items\": [\n      {\n        \"icon\": \"check\",\n        \"text\": \"جاهزون لبدء الدرس\"\n      },\n      {\n        \"icon\": \"refresh\",\n        \"text\": \"يحتاجون إلى مراجعة سريعة\"\n      },\n      {\n        \"icon\": \"level\",\n        \"text\": \"تفاوت واضح في المعرفة السابقة\"\n      },\n      {\n        \"icon\": \"pencil\",\n        \"text\": \"البيانات غير كافية\"\n      }\n    ]\n  },\n  \"lastFive\": {\n    \"number\": 4,\n    \"title\": \"آخر خمس دقائق\",\n    \"color\": \"green\",\n    \"items\": [\n      {\n        \"icon\": \"bulb\",\n        \"text\": \"تلخيص الفكرة الرئيسة\"\n      },\n      {\n        \"icon\": \"search\",\n        \"text\": \"سؤال تحقق\"\n      },\n      {\n        \"icon\": \"timer\",\n        \"text\": \"تطبيق سريع\"\n      },\n      {\n        \"icon\": \"pencil\",\n        \"text\": \"بطاقة خروج (ثلاثة أسئلة)\"\n      },\n      {\n        \"icon\": \"next\",\n        \"text\": \"الخطوة القادمة\"\n      }\n    ]\n  },\n  \"decision\": {\n    \"number\": 5,\n    \"title\": \"قرار المعلم بعد الحصة\",\n    \"color\": \"green\",\n    \"items\": [\n      {\n        \"icon\": \"target\",\n        \"text\": \"متابعة الخطة كما هي\"\n      },\n      {\n        \"icon\": \"refresh\",\n        \"text\": \"إعادة التدريس بأسلوب مختلف\"\n      },\n      {\n        \"icon\": \"users\",\n        \"text\": \"تقديم دعم إضافي لبعض الطلاب\"\n      },\n      {\n        \"icon\": \"star\",\n        \"text\": \"توسيع التعلم للطلاب المتقنين\"\n      }\n    ]\n  },\n  \"note\": {\n    \"number\": 6,\n    \"title\": \"ملاحظة سريعة\",\n    \"color\": \"teal\",\n    \"text\": \"\",\n    \"lines\": 3,\n    \"deco\": \"🌿\"\n  },\n  \"teacher\": {\n    \"number\": 7,\n    \"title\": \"اسم المعلم\",\n    \"color\": \"teal\",\n    \"icon\": \"user\",\n    \"name\": \"\",\n    \"fields\": [\n      {\n        \"label\": \"التوقيع\",\n        \"value\": \"\"\n      },\n      {\n        \"label\": \"التاريخ\",\n        \"value\": \"\"\n      }\n    ]\n  },\n  \"visitor\": {\n    \"title\": \"ملاحظة الزائر  (عند وجود زيارة)\",\n    \"icon\": \"clipboard\",\n    \"text\": \"\",\n    \"lines\": 2,\n    \"color\": \"teal\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));",
+                  "pm.test(\"rendered as a golden-minutes card\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"X-Edu-Template\")).to.eql(\"golden-minutes\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — استبيان أنماط التعلم (learning-pattern)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "استبيان تحديد أنماط التعلم (بصري، سماعي، حركي، قراءة/كتابة). يصحّح نفسه: كل عبارة تغذّي نمطها، والنتيجة تُعاد قراءتها مع كل اختيار.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"learning-pattern\",\n    \"age\": \"pro\",\n    \"color\": \"teal\",\n    \"title\": \"استبيان تحديد أنماط التعلم للطلاب\",\n    \"pageTitle\": \"استبيان تحديد أنماط التعلم\",\n    \"subtitle\": \"بصري · سماعي · حركي · قراءة وكتابة\",\n    \"org\": {\n      \"title\": \"\",\n      \"subtitle\": \"\"\n    },\n    \"art\": \"🧠\",\n    \"titleDeco\": \"\",\n    \"footer\": \"\"\n  },\n  \"student\": {\n    \"color\": \"teal\",\n    \"fields\": [\n      {\n        \"icon\": \"user\",\n        \"label\": \"اسم الطالب\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"school\",\n        \"label\": \"الصف\",\n        \"value\": \"\"\n      },\n      {\n        \"icon\": \"calendar\",\n        \"label\": \"التاريخ\",\n        \"value\": \"\"\n      }\n    ]\n  },\n  \"intro\": {\n    \"number\": 1,\n    \"title\": \"الهدف من الاستبيان\",\n    \"color\": \"teal\",\n    \"text\": \"الهدف من هذا الاستبيان هو التعرف على أسلوب التعلم الذي يفضله كل طالب (بصري، سماعي، حركي، قراءة/كتابة، أو متوازن يجمع بين أكثر من نمط)، وذلك لمساعدة المعلمين على تكييف طرق التدريس بما يتناسب مع احتياجاتكم. جميع إجاباتكم سرية ولن تُستخدم إلا لأغراض تحسين العملية التعليمية. يُرجى الإجابة بكل صدق ودون استعجال؛ ولا يوجد أي جواب صحيح أو خاطئ. شكرًا لتعاونكم ومساهمتكم في تطوير تجربتكم التعليمية.\",\n    \"scaleLabel\": \"النقاط:\",\n    \"scale\": [\n      {\n        \"label\": \"تمامًا\",\n        \"value\": 4\n      },\n      {\n        \"label\": \"أحيانًا\",\n        \"value\": 3\n      },\n      {\n        \"label\": \"قليلًا\",\n        \"value\": 2\n      },\n      {\n        \"label\": \"لا يمثلني\",\n        \"value\": 1\n      }\n    ]\n  },\n  \"quiz\": {\n    \"number\": 2,\n    \"title\": \"العبارات — اختر ما ينطبق عليك\",\n    \"color\": \"teal\",\n    \"statementLabel\": \"العبارة\"\n  },\n  \"questions\": [\n    {\n      \"id\": \"lp-vis-1\",\n      \"text\": \"أفضل تعلم المعلومات من خلال رؤية الرسوم والصور.\",\n      \"style\": \"visual\"\n    },\n    {\n      \"id\": \"lp-aud-1\",\n      \"text\": \"أستوعب الشرح عندما أسمع المحاضرة أو الشرح الشفهي.\",\n      \"style\": \"auditory\"\n    },\n    {\n      \"id\": \"lp-kin-1\",\n      \"text\": \"أتعلم بشكل أفضل عندما أقوم بالتجارب العملية بنفسي.\",\n      \"style\": \"kinesthetic\"\n    },\n    {\n      \"id\": \"lp-vis-2\",\n      \"text\": \"أفضّل المخططات والخرائط الذهنية لترتيب الأفكار.\",\n      \"style\": \"visual\"\n    },\n    {\n      \"id\": \"lp-aud-2\",\n      \"text\": \"أترك ملاحظات صوتية لنفسي أو أستخدم التسجيلات للمراجعة.\",\n      \"style\": \"auditory\"\n    },\n    {\n      \"id\": \"lp-kin-2\",\n      \"text\": \"أفضل حل الأنشطة العملية باستخدام الأدوات والمواد.\",\n      \"style\": \"kinesthetic\"\n    },\n    {\n      \"id\": \"lp-vis-3\",\n      \"text\": \"أُفضّل مشاهدة مقاطع الفيديو التوضيحية.\",\n      \"style\": \"visual\"\n    },\n    {\n      \"id\": \"lp-aud-3\",\n      \"text\": \"أتعلم جيدًا عند الاستماع للمناقشات والمواعظ.\",\n      \"style\": \"auditory\"\n    },\n    {\n      \"id\": \"lp-kin-3\",\n      \"text\": \"أحب تحريك يدي والتفاعل الجسدي أثناء التعلم.\",\n      \"style\": \"kinesthetic\"\n    },\n    {\n      \"id\": \"lp-vis-4\",\n      \"text\": \"أُركز أفضل حين أقرأ النصوص والجداول.\",\n      \"style\": \"visual\"\n    },\n    {\n      \"id\": \"lp-aud-4\",\n      \"text\": \"أكرر المعلومات شفهيًا لنفسي لأتذكرها.\",\n      \"style\": \"auditory\"\n    },\n    {\n      \"id\": \"lp-kin-4\",\n      \"text\": \"أحتاج إلى المشي أو الحركة أثناء المراجعة.\",\n      \"style\": \"kinesthetic\"\n    },\n    {\n      \"id\": \"lp-rea-1\",\n      \"text\": \"أفضّل تدوين الملاحظات أثناء القراءة للحفظ.\",\n      \"style\": \"reading\"\n    },\n    {\n      \"id\": \"lp-rea-2\",\n      \"text\": \"أستعيد المعلومات بقراءة الملاحظات أو الكتب.\",\n      \"style\": \"reading\"\n    },\n    {\n      \"id\": \"lp-rea-3\",\n      \"text\": \"أحب الملخصات والكتب النصّية عن أي موضوع.\",\n      \"style\": \"reading\"\n    },\n    {\n      \"id\": \"lp-rea-4\",\n      \"text\": \"أُفضّل القوائم النصية والأوراق المكتوبة على الرسوم أو الشروحات الصوتية.\",\n      \"style\": \"reading\"\n    }\n  ],\n  \"styles\": [\n    {\n      \"key\": \"visual\",\n      \"label\": \"بصري\",\n      \"icon\": \"eye\",\n      \"color\": \"sky\",\n      \"description\": \"تتعلّم بالعين: الصور والرسوم والمخططات تثبّت المعلومة عندك أكثر من الكلام.\",\n      \"tips\": [\n        \"حوّل الدرس إلى خريطة ذهنية أو مخطط ملوّن.\",\n        \"استخدم الألوان والرموز لتمييز الأفكار الرئيسة.\",\n        \"شاهد مقاطع فيديو توضيحية قبل المراجعة النصية.\"\n      ]\n    },\n    {\n      \"key\": \"auditory\",\n      \"label\": \"سماعي\",\n      \"icon\": \"ear\",\n      \"color\": \"purple\",\n      \"description\": \"تتعلّم بالأذن: الشرح الشفهي والمناقشة يوصلان لك الفكرة أسرع من الورقة.\",\n      \"tips\": [\n        \"سجّل ملخص الدرس بصوتك واستمع إليه أثناء المراجعة.\",\n        \"اشرح الدرس بصوت مرتفع لزميل أو لنفسك.\",\n        \"شارك في المناقشات الصفية ولا تكتفِ بالإنصات.\"\n      ]\n    },\n    {\n      \"key\": \"kinesthetic\",\n      \"label\": \"حركي\",\n      \"icon\": \"hand\",\n      \"color\": \"orange\",\n      \"description\": \"تتعلّم باليد والحركة: التجربة العملية والنشاط الملموس هما طريقك للفهم.\",\n      \"tips\": [\n        \"طبّق ما تدرسه في تجربة أو نموذج ملموس.\",\n        \"راجع وأنت تمشي، وقسّم المراجعة إلى فترات قصيرة.\",\n        \"اطلب الأنشطة العملية والألعاب التعليمية بدل الشرح الطويل.\"\n      ]\n    },\n    {\n      \"key\": \"reading\",\n      \"label\": \"قراءة/كتابة\",\n      \"icon\": \"notebook\",\n      \"color\": \"teal\",\n      \"description\": \"تتعلّم بالقلم: القراءة المركزة وتدوين الملاحظات هما أقوى أدواتك.\",\n      \"tips\": [\n        \"أعد كتابة الدرس بأسلوبك في ملخص مختصر.\",\n        \"استخدم القوائم والجداول لترتيب المعلومات.\",\n        \"اقرأ ثم دوّن، ولا تعتمد على القراءة وحدها.\"\n      ]\n    }\n  ],\n  \"verdict\": {\n    \"number\": 3,\n    \"title\": \"النتيجة والتحليل\",\n    \"color\": \"teal\",\n    \"label\": \"نمط التعلم الغالب\",\n    \"balanced\": {\n      \"label\": \"متوازن\",\n      \"description\": \"تتساوى عندك أكثر من قناة تعلّم، وهذه ميزة: تستطيع الاستفادة من الشرح والصورة والنشاط معًا.\",\n      \"tips\": [\n        \"نوّع أدوات المراجعة ولا تلتزم بأسلوب واحد.\",\n        \"ابدأ بالقناة الأقوى ثم ثبّت المعلومة بقناة أخرى.\",\n        \"اختر الأسلوب حسب طبيعة المادة لا حسب العادة.\"\n      ]\n    },\n    \"undecided\": {\n      \"label\": \"غير محدد\",\n      \"description\": \"أجب عن العبارات أعلاه لتظهر درجاتك في الأنماط الأربعة ونمطك الغالب.\"\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));",
+                  "pm.test(\"rendered as a learning-pattern survey\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"X-Edu-Template\")).to.eql(\"learning-pattern\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render — غلاف بخيارات (options + data)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ]
+            },
+            "description": "الشكل الثاني للجسم: `{ options, data }` — لتمرير الخيارات داخل الجسم بدل الرابط.\n\n`standalone: true` يُضمّن كل ملفات CSS داخل الصفحة، و`interactive: false` يحذف\nالجافاسكربت بالكامل ⇒ ملف واحد مستقل تمامًا، مناسب للأرشفة أو التحويل إلى PDF.\n\n(`data` يقبل أيضًا الأسماء: worksheet / lesson / sheet)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"options\": {\n    \"theme\": \"kid\",\n    \"standalone\": true,\n    \"interactive\": false,\n    \"toolbar\": false\n  },\n  \"data\": {\n    \"meta\": {\n      \"template\": \"differentiated-lesson\",\n      \"age\": \"pro\",\n      \"color\": \"teal\",\n      \"title\": \"درس: حل المعادلات من الدرجة الأولى\",\n      \"subtitle\": \"وفق التعليم المتمايز\",\n      \"banner\": \"تعليم يتنوع ليلبي احتياجات كل متعلم .. ويقود إلى تعلم فعّال\",\n      \"pageTitle\": \"درس: حل المعادلات من الدرجة الأولى\",\n      \"formula\": {\n        \"lines\": [\n          \"ax + b = c\",\n          \"x = (c − b) ÷ a\"\n        ],\n        \"icon\": \"💡\"\n      },\n      \"art\": \"📚\"\n    },\n    \"info\": [\n      {\n        \"icon\": \"target\",\n        \"label\": \"الفئة المستهدفة\",\n        \"value\": \"الصف الأول المتوسط\"\n      },\n      {\n        \"icon\": \"calendar\",\n        \"label\": \"الزمن\",\n        \"value\": \"حصتان (90 دقيقة)\"\n      },\n      {\n        \"icon\": \"level\",\n        \"label\": \"المادة\",\n        \"value\": \"رياضيات\"\n      },\n      {\n        \"icon\": \"book\",\n        \"label\": \"الموضوع\",\n        \"value\": \"حل المعادلات من الدرجة الأولى\"\n      }\n    ],\n    \"goals\": {\n      \"title\": \"الأهداف\",\n      \"icon\": \"target\",\n      \"color\": \"green\",\n      \"groups\": [\n        {\n          \"icon\": \"book\",\n          \"title\": \"معرفية\",\n          \"items\": [\n            \"يتعرف مفهوم المعادلة من الدرجة الأولى.\",\n            \"يحدد خطوات حل المعادلات من الدرجة الأولى.\"\n          ]\n        },\n        {\n          \"icon\": \"pencil\",\n          \"title\": \"مهارية\",\n          \"items\": [\n            \"يحل معادلات من الدرجة الأولى بخطوات صحيحة.\",\n            \"يوظف الحل في مواقف حياتية بسيطة.\"\n          ]\n        },\n        {\n          \"icon\": \"heart\",\n          \"title\": \"وجدانية\",\n          \"items\": [\n            \"يُظهر دافعية للمشاركة والتعلم.\",\n            \"يقدر أهمية الرياضيات في الحياة اليومية.\"\n          ]\n        }\n      ]\n    },\n    \"strategies\": {\n      \"title\": \"استراتيجيات التعليم المتمايز\",\n      \"icon\": \"puzzle\",\n      \"color\": \"teal\",\n      \"items\": [\n        \"التعلم حسب مستوى الاستعداد\",\n        \"تنويع المحتوى والأنشطة\",\n        \"تنويع طرق العرض والشرح\",\n        \"التعلم التعاوني\",\n        \"التقويم المستمر والتغذية الراجعة\"\n      ]\n    },\n    \"tools\": {\n      \"title\": \"الوسائل التعليمية\",\n      \"icon\": \"computer\",\n      \"color\": \"blue\",\n      \"items\": [\n        \"عروض تفاعلية (بوربوينت)\",\n        \"بطاقات تعليمية ملونة\",\n        \"أوراق عمل متدرجة\",\n        \"سبورة ذكية\",\n        \"تطبيقات تعليمية\"\n      ]\n    },\n    \"homework\": {\n      \"title\": \"الواجب المنزلي المتمايز\",\n      \"icon\": \"notebook\",\n      \"color\": \"yellow\",\n      \"items\": [\n        {\n          \"level\": \"advanced\",\n          \"icon\": \"🧑‍🎓\",\n          \"label\": \"المجموعة المتقدمة\",\n          \"text\": \"مسائل إضافية وتحدي. ابحث عن تطبيقات للمعادلات.\"\n        },\n        {\n          \"level\": \"middle\",\n          \"icon\": \"🧑\",\n          \"label\": \"المجموعة المتوسطة\",\n          \"text\": \"حل ورقة عمل متدرجة. مسائل من الكتاب المدرسي.\"\n        },\n        {\n          \"level\": \"basic\",\n          \"icon\": \"👶\",\n          \"label\": \"المجموعة الأساسية\",\n          \"text\": \"ورقة عمل مبسطة. مشاهدة فيديو تعليمي قصير.\"\n        }\n      ]\n    },\n    \"groups\": {\n      \"title\": \"تقسيم المجموعات وفق التعليم المتمايز\",\n      \"icon\": \"users\",\n      \"items\": [\n        {\n          \"level\": \"basic\",\n          \"name\": \"المجموعة الأساسية\",\n          \"icon\": \"user\",\n          \"items\": [\n            \"تمتلك استعداداً منخفضاً.\",\n            \"تحتاج إلى دعم كبير ومستمر.\",\n            \"تحتاج إلى أنشطة مبسطة وخطوات إرشادية واضحة.\"\n          ]\n        },\n        {\n          \"level\": \"middle\",\n          \"name\": \"المجموعة المتوسطة\",\n          \"icon\": \"users\",\n          \"items\": [\n            \"تمتلك استعداداً متوسطاً.\",\n            \"تحتاج إلى دعم وتوجيه.\",\n            \"تحتاج إلى أنشطة تطبيقية متدرجة الصعوبة.\"\n          ]\n        },\n        {\n          \"level\": \"advanced\",\n          \"name\": \"المجموعة المتقدمة\",\n          \"icon\": \"user-check\",\n          \"items\": [\n            \"تمتلك استعداداً مرتفعاً.\",\n            \"تسعى للتحدي والبحث.\",\n            \"تحتاج إلى أنشطة إثرائية ومسائل غير روتينية.\"\n          ]\n        }\n      ]\n    },\n    \"intro\": {\n      \"title\": \"تمهيد (5 دقائق)\",\n      \"icon\": \"star\",\n      \"color\": \"yellow\",\n      \"art\": \"📚\",\n      \"text\": \"عرض موقف حياتي: اشتريت كتاباً ثمنه «س»، ودفعت مبلغ 25، وكان الباقي 10، ما المعادلة التي تمثل الموقف؟ وما قيمة «س»؟\",\n      \"equation\": \"س + 10 = 25\"\n    },\n    \"activities\": {\n      \"title\": \"الأنشطة التعليمية المتمايزة (60 دقيقة)\",\n      \"icon\": \"puzzle\",\n      \"color\": \"purple\",\n      \"columns\": [\n        {\n          \"level\": \"basic\",\n          \"title\": \"أنشطة المجموعة الأساسية\",\n          \"items\": [\n            \"حل معادلات بخطوة واحدة.\",\n            \"استخدام بطاقات خطوات الحل.\",\n            \"العمل مع المعلم بشكل مباشر.\"\n          ],\n          \"example\": {\n            \"icon\": \"🙋\",\n            \"label\": \"مثال:\",\n            \"text\": \"x + 7 = 12\"\n          }\n        },\n        {\n          \"level\": \"middle\",\n          \"title\": \"أنشطة المجموعة المتوسطة\",\n          \"items\": [\n            \"حل معادلات من خطوتين.\",\n            \"مسائل تطبيقية بسيطة.\",\n            \"العمل في مجموعات تعاونية لمناقشة الحل.\"\n          ],\n          \"example\": {\n            \"icon\": \"👥\",\n            \"label\": \"مثال:\",\n            \"text\": \"2x + 5 = 17\"\n          }\n        },\n        {\n          \"level\": \"advanced\",\n          \"title\": \"أنشطة المجموعة المتقدمة\",\n          \"items\": [\n            \"حل معادلات تحتوي على كسور وأقواس.\",\n            \"مسائل تطبيقية من واقع الحياة.\",\n            \"تحدي: صمم معادلة وحلها لزميلك.\"\n          ],\n          \"example\": {\n            \"icon\": \"🏆\",\n            \"label\": \"مثال:\",\n            \"text\": \"3(x − 2) + 4 = 2x + 10\"\n          }\n        }\n      ]\n    },\n    \"assessment\": {\n      \"title\": \"التقويم المتمايز (20 دقيقة)\",\n      \"icon\": \"clipboard-check\",\n      \"color\": \"teal\",\n      \"columns\": [\n        {\n          \"level\": \"basic\",\n          \"title\": \"تقويم المجموعة الأساسية\",\n          \"icon\": \"user\",\n          \"text\": \"مسائل بخطوة واحدة مع توجيه مباشر.\",\n          \"example\": {\n            \"label\": \"مثال:\",\n            \"text\": \"x − 6 = 9\"\n          }\n        },\n        {\n          \"level\": \"middle\",\n          \"title\": \"تقويم المجموعة المتوسطة\",\n          \"icon\": \"users\",\n          \"text\": \"مسائل من خطوتين مع دعم حل بعض الخطوات.\",\n          \"example\": {\n            \"label\": \"مثال:\",\n            \"text\": \"3x − 4 = 14\"\n          }\n        },\n        {\n          \"level\": \"advanced\",\n          \"title\": \"تقويم المجموعة المتقدمة\",\n          \"icon\": \"trophy\",\n          \"text\": \"مسائل مركبة وتطبيقات حياتية تتطلب تفكيراً عالياً.\",\n          \"example\": {\n            \"label\": \"أوجد قيمة س:\",\n            \"text\": \"4(x + 3) − 2 = 2(x − 1) + 8\"\n          }\n        }\n      ]\n    },\n    \"closing\": [\n      {\n        \"icon\": \"check\",\n        \"title\": \"الخاتمة (5 دقائق)\",\n        \"deco\": \"🎉\",\n        \"color\": \"teal\",\n        \"items\": [\n          \"مراجعة سريعة لأهم النقاط.\",\n          \"تشجيع المتعلمين وتقدير جهودهم.\"\n        ],\n        \"note\": \"سؤال ختامي: ما الخطوة التي ساعدتك أكثر في حل المعادلة؟\"\n      },\n      {\n        \"icon\": \"users\",\n        \"title\": \"دعم إضافي للمتعثرين\",\n        \"deco\": \"🌱\",\n        \"color\": \"blue\",\n        \"items\": [\n          \"إعادة شرح مبسط مع مخططات توضيحية.\",\n          \"استخدام أمثلة قريبة من واقعهم.\",\n          \"وقت إضافي وممارسة موجهة.\"\n        ]\n      },\n      {\n        \"icon\": \"star\",\n        \"title\": \"إثراءات للمتقدمين\",\n        \"deco\": \"🎯\",\n        \"color\": \"red\",\n        \"items\": [\n          \"مسائل تحدٍّ ومسابقات رياضية.\",\n          \"ربط المعادلات بالجبر والهندسة.\",\n          \"استخدام استراتيجيات متنوعة للحل.\"\n        ]\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));",
+                  "pm.test(\"self-contained: no script tags, CSS inlined\", () => {",
+                  "  pm.expect(pm.response.text()).to.not.include(\"<script\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<style>\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render?embed=1 — للتضمين داخل iframe",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render?embed=1&toolbar=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ],
+              "query": [
+                {
+                  "key": "embed",
+                  "value": "1",
+                  "description": "يزيل إطار الصفحة الخارجي"
+                },
+                {
+                  "key": "toolbar",
+                  "value": "0",
+                  "description": "إخفاء شريط الأدوات العائم"
+                }
+              ]
+            },
+            "description": "نسخة نظيفة بلا زخرفة خارجية، تُوضع مباشرة داخل `<iframe>` في نظامك.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"interactive-card\",\n    \"age\": \"pro\",\n    \"color\": \"#177a6c\",\n    \"badge\": \"بطاقات مراجعـة تفاعليـة\",\n    \"subtitle\": \"اللغة العربية – الصف الخامس\",\n    \"lessonLabel\": \"عنوان الدرس\",\n    \"lessonTitle\": \"أنواع الجملة\",\n    \"pageTitle\": \"بطاقات مراجعة تفاعلية — أنواع الجملة\"\n  },\n  \"identity\": [\n    {\n      \"icon\": \"user\",\n      \"label\": \"المعلم / المعلمة\",\n      \"value\": \"\"\n    },\n    {\n      \"icon\": \"school\",\n      \"label\": \"المدرسة\",\n      \"value\": \"\"\n    },\n    {\n      \"icon\": \"users\",\n      \"label\": \"الصف\",\n      \"value\": \"\"\n    }\n  ],\n  \"objectives\": {\n    \"title\": \"أهداف الدرس\",\n    \"icon\": \"target\",\n    \"items\": [\n      \"التمييز بين الجملة الاسمية والجملة الفعلية\",\n      \"تحديد المبتدأ والخبر\",\n      \"تحديد الفعل والفاعل\",\n      \"تطبيق القاعدة في أمثلة بسيطة\"\n    ]\n  },\n  \"counter\": {\n    \"label\": \"عدد البطاقات\",\n    \"value\": \"8\",\n    \"unit\": \"بطاقات\",\n    \"icon\": \"book\"\n  },\n  \"cards\": [\n    {\n      \"number\": \"01\",\n      \"tag\": \"تعريف\",\n      \"icon\": \"book\",\n      \"question\": \"ما الجملة الاسمية؟ عرّفها.\"\n    },\n    {\n      \"number\": \"02\",\n      \"tag\": \"اختيار من متعدد\",\n      \"icon\": \"list\",\n      \"question\": \"أيٌّ مما يلي جملة فعلية؟\",\n      \"options\": [\n        \"أ. الطالبُ مجتهدٌ.\",\n        \"ب. تشرقُ الشمسُ.\",\n        \"ج. الحديقةُ واسعةٌ.\",\n        \"د. الكتابُ مفيدٌ.\"\n      ]\n    },\n    {\n      \"number\": \"03\",\n      \"tag\": \"صح أو خطأ\",\n      \"icon\": \"clipboard-check\",\n      \"question\": \"الجملة التي تبدأ بفعل تكون جملة اسمية.\"\n    },\n    {\n      \"number\": \"04\",\n      \"tag\": \"إكمال\",\n      \"icon\": \"puzzle\",\n      \"question\": \"تتكوّن الجملة الاسمية من ركنين أساسيين هما:\",\n      \"fill\": \"_____ و _____\"\n    },\n    {\n      \"number\": \"05\",\n      \"tag\": \"تصنيف\",\n      \"icon\": \"funnel\",\n      \"question\": \"صنّف الجمل الآتية إلى جملة اسمية أو جملة فعلية.\",\n      \"bullets\": [\n        \"السماءُ صافيةٌ.\",\n        \"تعلّم الطالبُ الدرسَ.\",\n        \"الرياضةُ مفيدةٌ.\"\n      ]\n    },\n    {\n      \"number\": \"06\",\n      \"tag\": \"تطبيق\",\n      \"icon\": \"notebook\",\n      \"question\": \"حوّل الجملة الاسمية الآتية إلى جملة فعلية بحيث يبقى المعنى مناسبًا. الحديقةُ جميلةٌ.\"\n    },\n    {\n      \"number\": \"07\",\n      \"tag\": \"استخراج\",\n      \"icon\": \"search\",\n      \"question\": \"استخرج الفعل والفاعل من الجملة التالية: يزرعُ الفلاحُ الأزهارَ في الحديقةِ.\"\n    },\n    {\n      \"number\": \"08\",\n      \"tag\": \"تحدٍّ\",\n      \"icon\": \"trophy\",\n      \"question\": \"اكتب جملتين من إنشائك؛ واحدةً اسميةً وأخرى فعليةً.\",\n      \"answerLabel\": \"\",\n      \"lines\": 2,\n      \"numbered\": true\n    }\n  ],\n  \"footer\": {\n    \"items\": [\n      {\n        \"icon\": \"heart\",\n        \"text\": \"أبدع وتألق\"\n      },\n      {\n        \"icon\": \"leaf\",\n        \"text\": \"تعلّم ممتع .. لغة أجمل\"\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/render?download=… — تنزيل كملف",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/render?download=lesson-plan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ],
+              "query": [
+                {
+                  "key": "download",
+                  "value": "lesson-plan",
+                  "description": "اسم الملف (بدون امتداد)"
+                }
+              ]
+            },
+            "description": "يضيف ترويسة `Content-Disposition: attachment` فيحفظ المتصفح الملف بدل عرضه. الأسماء العربية مدعومة (RFC 5987).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"differentiated-lesson\",\n    \"age\": \"pro\",\n    \"color\": \"teal\",\n    \"title\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"subtitle\": \"وفق التعليم المتمايز\",\n    \"banner\": \"تعليم يتنوع ليلبي احتياجات كل متعلم .. ويقود إلى تعلم فعّال\",\n    \"pageTitle\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"formula\": {\n      \"lines\": [\n        \"ax + b = c\",\n        \"x = (c − b) ÷ a\"\n      ],\n      \"icon\": \"💡\"\n    },\n    \"art\": \"📚\"\n  },\n  \"info\": [\n    {\n      \"icon\": \"target\",\n      \"label\": \"الفئة المستهدفة\",\n      \"value\": \"الصف الأول المتوسط\"\n    },\n    {\n      \"icon\": \"calendar\",\n      \"label\": \"الزمن\",\n      \"value\": \"حصتان (90 دقيقة)\"\n    },\n    {\n      \"icon\": \"level\",\n      \"label\": \"المادة\",\n      \"value\": \"رياضيات\"\n    },\n    {\n      \"icon\": \"book\",\n      \"label\": \"الموضوع\",\n      \"value\": \"حل المعادلات من الدرجة الأولى\"\n    }\n  ],\n  \"goals\": {\n    \"title\": \"الأهداف\",\n    \"icon\": \"target\",\n    \"color\": \"green\",\n    \"groups\": [\n      {\n        \"icon\": \"book\",\n        \"title\": \"معرفية\",\n        \"items\": [\n          \"يتعرف مفهوم المعادلة من الدرجة الأولى.\",\n          \"يحدد خطوات حل المعادلات من الدرجة الأولى.\"\n        ]\n      },\n      {\n        \"icon\": \"pencil\",\n        \"title\": \"مهارية\",\n        \"items\": [\n          \"يحل معادلات من الدرجة الأولى بخطوات صحيحة.\",\n          \"يوظف الحل في مواقف حياتية بسيطة.\"\n        ]\n      },\n      {\n        \"icon\": \"heart\",\n        \"title\": \"وجدانية\",\n        \"items\": [\n          \"يُظهر دافعية للمشاركة والتعلم.\",\n          \"يقدر أهمية الرياضيات في الحياة اليومية.\"\n        ]\n      }\n    ]\n  },\n  \"strategies\": {\n    \"title\": \"استراتيجيات التعليم المتمايز\",\n    \"icon\": \"puzzle\",\n    \"color\": \"teal\",\n    \"items\": [\n      \"التعلم حسب مستوى الاستعداد\",\n      \"تنويع المحتوى والأنشطة\",\n      \"تنويع طرق العرض والشرح\",\n      \"التعلم التعاوني\",\n      \"التقويم المستمر والتغذية الراجعة\"\n    ]\n  },\n  \"tools\": {\n    \"title\": \"الوسائل التعليمية\",\n    \"icon\": \"computer\",\n    \"color\": \"blue\",\n    \"items\": [\n      \"عروض تفاعلية (بوربوينت)\",\n      \"بطاقات تعليمية ملونة\",\n      \"أوراق عمل متدرجة\",\n      \"سبورة ذكية\",\n      \"تطبيقات تعليمية\"\n    ]\n  },\n  \"homework\": {\n    \"title\": \"الواجب المنزلي المتمايز\",\n    \"icon\": \"notebook\",\n    \"color\": \"yellow\",\n    \"items\": [\n      {\n        \"level\": \"advanced\",\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"المجموعة المتقدمة\",\n        \"text\": \"مسائل إضافية وتحدي. ابحث عن تطبيقات للمعادلات.\"\n      },\n      {\n        \"level\": \"middle\",\n        \"icon\": \"🧑\",\n        \"label\": \"المجموعة المتوسطة\",\n        \"text\": \"حل ورقة عمل متدرجة. مسائل من الكتاب المدرسي.\"\n      },\n      {\n        \"level\": \"basic\",\n        \"icon\": \"👶\",\n        \"label\": \"المجموعة الأساسية\",\n        \"text\": \"ورقة عمل مبسطة. مشاهدة فيديو تعليمي قصير.\"\n      }\n    ]\n  },\n  \"groups\": {\n    \"title\": \"تقسيم المجموعات وفق التعليم المتمايز\",\n    \"icon\": \"users\",\n    \"items\": [\n      {\n        \"level\": \"basic\",\n        \"name\": \"المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"items\": [\n          \"تمتلك استعداداً منخفضاً.\",\n          \"تحتاج إلى دعم كبير ومستمر.\",\n          \"تحتاج إلى أنشطة مبسطة وخطوات إرشادية واضحة.\"\n        ]\n      },\n      {\n        \"level\": \"middle\",\n        \"name\": \"المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"items\": [\n          \"تمتلك استعداداً متوسطاً.\",\n          \"تحتاج إلى دعم وتوجيه.\",\n          \"تحتاج إلى أنشطة تطبيقية متدرجة الصعوبة.\"\n        ]\n      },\n      {\n        \"level\": \"advanced\",\n        \"name\": \"المجموعة المتقدمة\",\n        \"icon\": \"user-check\",\n        \"items\": [\n          \"تمتلك استعداداً مرتفعاً.\",\n          \"تسعى للتحدي والبحث.\",\n          \"تحتاج إلى أنشطة إثرائية ومسائل غير روتينية.\"\n        ]\n      }\n    ]\n  },\n  \"intro\": {\n    \"title\": \"تمهيد (5 دقائق)\",\n    \"icon\": \"star\",\n    \"color\": \"yellow\",\n    \"art\": \"📚\",\n    \"text\": \"عرض موقف حياتي: اشتريت كتاباً ثمنه «س»، ودفعت مبلغ 25، وكان الباقي 10، ما المعادلة التي تمثل الموقف؟ وما قيمة «س»؟\",\n    \"equation\": \"س + 10 = 25\"\n  },\n  \"activities\": {\n    \"title\": \"الأنشطة التعليمية المتمايزة (60 دقيقة)\",\n    \"icon\": \"puzzle\",\n    \"color\": \"purple\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"أنشطة المجموعة الأساسية\",\n        \"items\": [\n          \"حل معادلات بخطوة واحدة.\",\n          \"استخدام بطاقات خطوات الحل.\",\n          \"العمل مع المعلم بشكل مباشر.\"\n        ],\n        \"example\": {\n          \"icon\": \"🙋\",\n          \"label\": \"مثال:\",\n          \"text\": \"x + 7 = 12\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"أنشطة المجموعة المتوسطة\",\n        \"items\": [\n          \"حل معادلات من خطوتين.\",\n          \"مسائل تطبيقية بسيطة.\",\n          \"العمل في مجموعات تعاونية لمناقشة الحل.\"\n        ],\n        \"example\": {\n          \"icon\": \"👥\",\n          \"label\": \"مثال:\",\n          \"text\": \"2x + 5 = 17\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"أنشطة المجموعة المتقدمة\",\n        \"items\": [\n          \"حل معادلات تحتوي على كسور وأقواس.\",\n          \"مسائل تطبيقية من واقع الحياة.\",\n          \"تحدي: صمم معادلة وحلها لزميلك.\"\n        ],\n        \"example\": {\n          \"icon\": \"🏆\",\n          \"label\": \"مثال:\",\n          \"text\": \"3(x − 2) + 4 = 2x + 10\"\n        }\n      }\n    ]\n  },\n  \"assessment\": {\n    \"title\": \"التقويم المتمايز (20 دقيقة)\",\n    \"icon\": \"clipboard-check\",\n    \"color\": \"teal\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"تقويم المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"text\": \"مسائل بخطوة واحدة مع توجيه مباشر.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"x − 6 = 9\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"تقويم المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"text\": \"مسائل من خطوتين مع دعم حل بعض الخطوات.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"3x − 4 = 14\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"تقويم المجموعة المتقدمة\",\n        \"icon\": \"trophy\",\n        \"text\": \"مسائل مركبة وتطبيقات حياتية تتطلب تفكيراً عالياً.\",\n        \"example\": {\n          \"label\": \"أوجد قيمة س:\",\n          \"text\": \"4(x + 3) − 2 = 2(x − 1) + 8\"\n        }\n      }\n    ]\n  },\n  \"closing\": [\n    {\n      \"icon\": \"check\",\n      \"title\": \"الخاتمة (5 دقائق)\",\n      \"deco\": \"🎉\",\n      \"color\": \"teal\",\n      \"items\": [\n        \"مراجعة سريعة لأهم النقاط.\",\n        \"تشجيع المتعلمين وتقدير جهودهم.\"\n      ],\n      \"note\": \"سؤال ختامي: ما الخطوة التي ساعدتك أكثر في حل المعادلة؟\"\n    },\n    {\n      \"icon\": \"users\",\n      \"title\": \"دعم إضافي للمتعثرين\",\n      \"deco\": \"🌱\",\n      \"color\": \"blue\",\n      \"items\": [\n        \"إعادة شرح مبسط مع مخططات توضيحية.\",\n        \"استخدام أمثلة قريبة من واقعهم.\",\n        \"وقت إضافي وممارسة موجهة.\"\n      ]\n    },\n    {\n      \"icon\": \"star\",\n      \"title\": \"إثراءات للمتقدمين\",\n      \"deco\": \"🎯\",\n      \"color\": \"red\",\n      \"items\": [\n        \"مسائل تحدٍّ ومسابقات رياضية.\",\n        \"ربط المعادلات بالجبر والهندسة.\",\n        \"استخدام استراتيجيات متنوعة للحل.\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"served as a download\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/render?data=… — صفحة من رابط مباشر",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/render?data=eyJtZXRhIjp7InRlbXBsYXRlIjoid29ya3NoZWV0IiwiYWdlIjoia2lkIiwiY29sb3IiOiJncmVlbiIsImJhZGdlIjoi2YjYsdmC2Kkg2LnZhdmEIiwidGl0bGUiOiLYrNmF2Lkg2KfZhNij2LnYr9in2K8ifSwic2VjdGlvbnMiOlt7InR5cGUiOiJub3RlIiwidGl0bGUiOiLYqtiv2LHYqCIsImNvbG9yIjoiZ3JlZW4iLCJ0ZXh0Ijoi2KfYrNmF2Lkg2KfZhNij2LnYr9in2K8g2KfZhNiq2KfZhNmK2Kk6IDMgKyA0ID0gX19fIn1dfQ&embed=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "render"
+              ],
+              "query": [
+                {
+                  "key": "data",
+                  "value": "eyJtZXRhIjp7InRlbXBsYXRlIjoid29ya3NoZWV0IiwiYWdlIjoia2lkIiwiY29sb3IiOiJncmVlbiIsImJhZGdlIjoi2YjYsdmC2Kkg2LnZhdmEIiwidGl0bGUiOiLYrNmF2Lkg2KfZhNij2LnYr9in2K8ifSwic2VjdGlvbnMiOlt7InR5cGUiOiJub3RlIiwidGl0bGUiOiLYqtiv2LHYqCIsImNvbG9yIjoiZ3JlZW4iLCJ0ZXh0Ijoi2KfYrNmF2Lkg2KfZhNij2LnYr9in2K8g2KfZhNiq2KfZhNmK2Kk6IDMgKyA0ID0gX19fIn1dfQ",
+                  "description": "ورقة العمل مُرمّزة base64url"
+                },
+                {
+                  "key": "embed",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "نفس المُصيِّر خلف رابط عادي — للمعاينات و`<iframe src=…>`.\n\nالرابط محدود الطول في المتصفحات، فاستخدم POST لأي حجم حقيقي،\nأو خزّن الصفحة مرة واحدة عبر `POST /api/sheets` واربط `/s/:id`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · صفحات مخزّنة — Stored sheets",
+      "description": "خزّن البيانات مرة واحدة واحصل على رابط يمكن فتحه أكثر من مرة:\nرابط في بريد، أو `<iframe>` في منصتك، أو متصفح آلي يلتقط صورة.\n\nالتخزين في الذاكرة ومؤقّت (24 ساعة افتراضيًا، ويُمسح عند إعادة تشغيل الخادم).\nالدروس الدائمة مكانها `data/lessons/<id>.json`.",
+      "item": [
+        {
+          "name": "POST /api/sheets — خزّن واحصل على رابط",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/sheets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sheets"
+              ]
+            },
+            "description": "يعيد 201 مع `id` وروابط جاهزة: الصفحة، التضمين، الصورة، وبيانات الـ JSON. يحفظ السكربت قيمة `sheetId` تلقائيًا لبقية الطلبات.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"meta\": {\n    \"template\": \"differentiated-lesson\",\n    \"age\": \"pro\",\n    \"color\": \"teal\",\n    \"title\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"subtitle\": \"وفق التعليم المتمايز\",\n    \"banner\": \"تعليم يتنوع ليلبي احتياجات كل متعلم .. ويقود إلى تعلم فعّال\",\n    \"pageTitle\": \"درس: حل المعادلات من الدرجة الأولى\",\n    \"formula\": {\n      \"lines\": [\n        \"ax + b = c\",\n        \"x = (c − b) ÷ a\"\n      ],\n      \"icon\": \"💡\"\n    },\n    \"art\": \"📚\"\n  },\n  \"info\": [\n    {\n      \"icon\": \"target\",\n      \"label\": \"الفئة المستهدفة\",\n      \"value\": \"الصف الأول المتوسط\"\n    },\n    {\n      \"icon\": \"calendar\",\n      \"label\": \"الزمن\",\n      \"value\": \"حصتان (90 دقيقة)\"\n    },\n    {\n      \"icon\": \"level\",\n      \"label\": \"المادة\",\n      \"value\": \"رياضيات\"\n    },\n    {\n      \"icon\": \"book\",\n      \"label\": \"الموضوع\",\n      \"value\": \"حل المعادلات من الدرجة الأولى\"\n    }\n  ],\n  \"goals\": {\n    \"title\": \"الأهداف\",\n    \"icon\": \"target\",\n    \"color\": \"green\",\n    \"groups\": [\n      {\n        \"icon\": \"book\",\n        \"title\": \"معرفية\",\n        \"items\": [\n          \"يتعرف مفهوم المعادلة من الدرجة الأولى.\",\n          \"يحدد خطوات حل المعادلات من الدرجة الأولى.\"\n        ]\n      },\n      {\n        \"icon\": \"pencil\",\n        \"title\": \"مهارية\",\n        \"items\": [\n          \"يحل معادلات من الدرجة الأولى بخطوات صحيحة.\",\n          \"يوظف الحل في مواقف حياتية بسيطة.\"\n        ]\n      },\n      {\n        \"icon\": \"heart\",\n        \"title\": \"وجدانية\",\n        \"items\": [\n          \"يُظهر دافعية للمشاركة والتعلم.\",\n          \"يقدر أهمية الرياضيات في الحياة اليومية.\"\n        ]\n      }\n    ]\n  },\n  \"strategies\": {\n    \"title\": \"استراتيجيات التعليم المتمايز\",\n    \"icon\": \"puzzle\",\n    \"color\": \"teal\",\n    \"items\": [\n      \"التعلم حسب مستوى الاستعداد\",\n      \"تنويع المحتوى والأنشطة\",\n      \"تنويع طرق العرض والشرح\",\n      \"التعلم التعاوني\",\n      \"التقويم المستمر والتغذية الراجعة\"\n    ]\n  },\n  \"tools\": {\n    \"title\": \"الوسائل التعليمية\",\n    \"icon\": \"computer\",\n    \"color\": \"blue\",\n    \"items\": [\n      \"عروض تفاعلية (بوربوينت)\",\n      \"بطاقات تعليمية ملونة\",\n      \"أوراق عمل متدرجة\",\n      \"سبورة ذكية\",\n      \"تطبيقات تعليمية\"\n    ]\n  },\n  \"homework\": {\n    \"title\": \"الواجب المنزلي المتمايز\",\n    \"icon\": \"notebook\",\n    \"color\": \"yellow\",\n    \"items\": [\n      {\n        \"level\": \"advanced\",\n        \"icon\": \"🧑‍🎓\",\n        \"label\": \"المجموعة المتقدمة\",\n        \"text\": \"مسائل إضافية وتحدي. ابحث عن تطبيقات للمعادلات.\"\n      },\n      {\n        \"level\": \"middle\",\n        \"icon\": \"🧑\",\n        \"label\": \"المجموعة المتوسطة\",\n        \"text\": \"حل ورقة عمل متدرجة. مسائل من الكتاب المدرسي.\"\n      },\n      {\n        \"level\": \"basic\",\n        \"icon\": \"👶\",\n        \"label\": \"المجموعة الأساسية\",\n        \"text\": \"ورقة عمل مبسطة. مشاهدة فيديو تعليمي قصير.\"\n      }\n    ]\n  },\n  \"groups\": {\n    \"title\": \"تقسيم المجموعات وفق التعليم المتمايز\",\n    \"icon\": \"users\",\n    \"items\": [\n      {\n        \"level\": \"basic\",\n        \"name\": \"المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"items\": [\n          \"تمتلك استعداداً منخفضاً.\",\n          \"تحتاج إلى دعم كبير ومستمر.\",\n          \"تحتاج إلى أنشطة مبسطة وخطوات إرشادية واضحة.\"\n        ]\n      },\n      {\n        \"level\": \"middle\",\n        \"name\": \"المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"items\": [\n          \"تمتلك استعداداً متوسطاً.\",\n          \"تحتاج إلى دعم وتوجيه.\",\n          \"تحتاج إلى أنشطة تطبيقية متدرجة الصعوبة.\"\n        ]\n      },\n      {\n        \"level\": \"advanced\",\n        \"name\": \"المجموعة المتقدمة\",\n        \"icon\": \"user-check\",\n        \"items\": [\n          \"تمتلك استعداداً مرتفعاً.\",\n          \"تسعى للتحدي والبحث.\",\n          \"تحتاج إلى أنشطة إثرائية ومسائل غير روتينية.\"\n        ]\n      }\n    ]\n  },\n  \"intro\": {\n    \"title\": \"تمهيد (5 دقائق)\",\n    \"icon\": \"star\",\n    \"color\": \"yellow\",\n    \"art\": \"📚\",\n    \"text\": \"عرض موقف حياتي: اشتريت كتاباً ثمنه «س»، ودفعت مبلغ 25، وكان الباقي 10، ما المعادلة التي تمثل الموقف؟ وما قيمة «س»؟\",\n    \"equation\": \"س + 10 = 25\"\n  },\n  \"activities\": {\n    \"title\": \"الأنشطة التعليمية المتمايزة (60 دقيقة)\",\n    \"icon\": \"puzzle\",\n    \"color\": \"purple\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"أنشطة المجموعة الأساسية\",\n        \"items\": [\n          \"حل معادلات بخطوة واحدة.\",\n          \"استخدام بطاقات خطوات الحل.\",\n          \"العمل مع المعلم بشكل مباشر.\"\n        ],\n        \"example\": {\n          \"icon\": \"🙋\",\n          \"label\": \"مثال:\",\n          \"text\": \"x + 7 = 12\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"أنشطة المجموعة المتوسطة\",\n        \"items\": [\n          \"حل معادلات من خطوتين.\",\n          \"مسائل تطبيقية بسيطة.\",\n          \"العمل في مجموعات تعاونية لمناقشة الحل.\"\n        ],\n        \"example\": {\n          \"icon\": \"👥\",\n          \"label\": \"مثال:\",\n          \"text\": \"2x + 5 = 17\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"أنشطة المجموعة المتقدمة\",\n        \"items\": [\n          \"حل معادلات تحتوي على كسور وأقواس.\",\n          \"مسائل تطبيقية من واقع الحياة.\",\n          \"تحدي: صمم معادلة وحلها لزميلك.\"\n        ],\n        \"example\": {\n          \"icon\": \"🏆\",\n          \"label\": \"مثال:\",\n          \"text\": \"3(x − 2) + 4 = 2x + 10\"\n        }\n      }\n    ]\n  },\n  \"assessment\": {\n    \"title\": \"التقويم المتمايز (20 دقيقة)\",\n    \"icon\": \"clipboard-check\",\n    \"color\": \"teal\",\n    \"columns\": [\n      {\n        \"level\": \"basic\",\n        \"title\": \"تقويم المجموعة الأساسية\",\n        \"icon\": \"user\",\n        \"text\": \"مسائل بخطوة واحدة مع توجيه مباشر.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"x − 6 = 9\"\n        }\n      },\n      {\n        \"level\": \"middle\",\n        \"title\": \"تقويم المجموعة المتوسطة\",\n        \"icon\": \"users\",\n        \"text\": \"مسائل من خطوتين مع دعم حل بعض الخطوات.\",\n        \"example\": {\n          \"label\": \"مثال:\",\n          \"text\": \"3x − 4 = 14\"\n        }\n      },\n      {\n        \"level\": \"advanced\",\n        \"title\": \"تقويم المجموعة المتقدمة\",\n        \"icon\": \"trophy\",\n        \"text\": \"مسائل مركبة وتطبيقات حياتية تتطلب تفكيراً عالياً.\",\n        \"example\": {\n          \"label\": \"أوجد قيمة س:\",\n          \"text\": \"4(x + 3) − 2 = 2(x − 1) + 8\"\n        }\n      }\n    ]\n  },\n  \"closing\": [\n    {\n      \"icon\": \"check\",\n      \"title\": \"الخاتمة (5 دقائق)\",\n      \"deco\": \"🎉\",\n      \"color\": \"teal\",\n      \"items\": [\n        \"مراجعة سريعة لأهم النقاط.\",\n        \"تشجيع المتعلمين وتقدير جهودهم.\"\n      ],\n      \"note\": \"سؤال ختامي: ما الخطوة التي ساعدتك أكثر في حل المعادلة؟\"\n    },\n    {\n      \"icon\": \"users\",\n      \"title\": \"دعم إضافي للمتعثرين\",\n      \"deco\": \"🌱\",\n      \"color\": \"blue\",\n      \"items\": [\n        \"إعادة شرح مبسط مع مخططات توضيحية.\",\n        \"استخدام أمثلة قريبة من واقعهم.\",\n        \"وقت إضافي وممارسة موجهة.\"\n      ]\n    },\n    {\n      \"icon\": \"star\",\n      \"title\": \"إثراءات للمتقدمين\",\n      \"deco\": \"🎯\",\n      \"color\": \"red\",\n      \"items\": [\n        \"مسائل تحدٍّ ومسابقات رياضية.\",\n        \"ربط المعادلات بالجبر والهندسة.\",\n        \"استخدام استراتيجيات متنوعة للحل.\"\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"stored\", () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"sheetId\", body.id);",
+                  "console.log(\"page:\", body.url, \"\\nembed:\", body.embedUrl, \"\\nimage:\", body.imageUrl);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /s/{{sheetId}} — الصفحة المخزّنة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/s/{{sheetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s",
+                "{{sheetId}}"
+              ]
+            },
+            "description": "الصفحة نفسها. كل خيارات التصيير تعمل هنا كمعاملات رابط: `?theme=kid` · `?embed=1` · `?print=1` · `?image=1`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /s/{{sheetId}}?theme=kid&embed=1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/s/{{sheetId}}?theme=kid&embed=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s",
+                "{{sheetId}}"
+              ],
+              "query": [
+                {
+                  "key": "theme",
+                  "value": "kid"
+                },
+                {
+                  "key": "embed",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "نفس الصفحة المخزّنة بمظهر ومقاس مختلفين — بلا إعادة إرسال البيانات."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /s/{{sheetId}}?image=1 — صفحة تحفظ نفسها كصورة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/s/{{sheetId}}?image=1&toolbar=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "s",
+                "{{sheetId}}"
+              ],
+              "query": [
+                {
+                  "key": "image",
+                  "value": "1"
+                },
+                {
+                  "key": "toolbar",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "الصفحة تُنزّل نفسها صورة A4 بدقة عالية بمجرد اكتمال العرض.\n\nهذا هو الخطاف المخصص للمتصفح الآلي (Puppeteer / Playwright):\nانتظر `document.documentElement.dataset.eduImage === \"done\"`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page came back\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "});",
+                  "console.log(\"template:\", pm.response.headers.get(\"X-Edu-Template\"),",
+                  "            \"| theme:\", pm.response.headers.get(\"X-Edu-Theme\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/sheets/{{sheetId}} — استرجاع الـ JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sheets/{{sheetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sheets",
+                "{{sheetId}}"
+              ]
+            },
+            "description": "البيانات كما أُرسلت."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the payload comes back\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.have.property(\"meta\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/sheets/{{sheetId}} — حذف مبكر",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sheets/{{sheetId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sheets",
+                "{{sheetId}}"
+              ]
+            },
+            "description": "يحذف الصفحة المخزّنة قبل انتهاء صلاحيتها."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 · الدروس الثابتة — Static lessons",
+      "description": "الدروس المحفوظة في `data/lessons/`. تعمل بلا خادم أيضًا عبر `index.html?lesson=<id>`.",
+      "item": [
+        {
+          "name": "GET /api/lessons/:id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/lessons/science-g2-living-creatures-needs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lessons",
+                "science-g2-living-creatures-needs"
+              ]
+            },
+            "description": "يقرأ `data/lessons/<id>.json`. مع ضبط `apiBase: \"/api\"` في config.js يصبح هذا مصدر الدروس للتطبيق في المتصفح."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"lesson found\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /index.html?lesson=:id — التطبيق نفسه",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/index.html?lesson=math-g7-linear-equations-diff&theme=pro",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "index.html"
+              ],
+              "query": [
+                {
+                  "key": "lesson",
+                  "value": "math-g7-linear-equations-diff"
+                },
+                {
+                  "key": "theme",
+                  "value": "pro"
+                }
+              ]
+            },
+            "description": "الخادم يقدّم الموقع الثابت أيضًا، فلا حاجة لتشغيل خادم آخر أثناء التطوير."
+          }
+        }
+      ]
+    }
+  ]
+}

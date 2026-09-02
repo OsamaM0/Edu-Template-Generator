@@ -1,0 +1,32 @@
+# Node
+node_modules/
+npm-debug.log*
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets. env.example is the committed template; .env never is.
+.env
+.env.*
+!env.example
+
+# Tooling scratch
+.playwright-mcp/
+
+# Pages built by the document pipeline (server/pipeline/). Generated output,
+# rebuilt on demand from Mongo — never source.
+data/cache/
+
+# Issued answer sheets (these hold ANSWER KEYS) and submitted student results.
+# Runtime state, and none of it belongs in the repo or in an image.
+data/assignments/
+data/output/
+
+# NOTE: data/lessons/*.wsx are generated (tools/pack-lessons.mjs) but are kept in
+# the repo on purpose — config.js ships with protection.packedLessons: true, so
+# the browser loads them at runtime. Ignore them only if you also pack on deploy.
+

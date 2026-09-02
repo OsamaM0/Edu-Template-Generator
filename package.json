@@ -1,0 +1,25 @@
+{
+  "name": "edu-web-template-generator",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "JSON-driven Arabic (RTL) worksheet engine. No build step; this file only lets Node run the ES modules in server/ and tools/.",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server/server.mjs",
+    "dev": "node --watch server/server.mjs",
+    "health": "node -e \"fetch('http://localhost:'+(process.env.PORT||8138)+'/api/health').then(r=>r.json()).then(o=>console.log(o))\"",
+    "store": "node tools/store.mjs",
+    "store:check": "node tools/store.mjs check",
+    "store:indexes": "node tools/store.mjs indexes",
+    "store:stats": "node tools/store.mjs stats",
+    "store:import": "node tools/store.mjs import-files",
+    "pack-lessons": "node tools/pack-lessons.mjs",
+    "make-postman": "node tools/make-postman.mjs",
+    "make-pipeline-postman": "node tools/make-pipeline-postman.mjs",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  }
+}

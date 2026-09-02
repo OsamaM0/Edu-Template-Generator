@@ -1,0 +1,168 @@
+/* ============================================================================
+   base.css — tokens, reset, page shell, loading/error states, toolbar
+   ========================================================================== */
+
+:root{
+  --ink:#33415c;
+  --sky1:#bfe6fb; --sky2:#e7f6ff;
+  --grass:#7ec85e; --grass-dark:#5aa93c;
+  --paper:#f2fbff;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:"Baloo Bhaijaan 2","Cairo","Segoe UI",Tahoma,sans-serif;
+  background:linear-gradient(180deg,#d7e3ee,#e6edf4);
+  color:var(--ink);
+  min-height:100vh;
+  padding:16px 10px 40px;
+}
+
+/* A4-proportioned sheet: 794px ≈ 210mm at 96dpi */
+.page{
+  --accent:#33608d; --accent-tint:#eaf0f6;
+  width:794px; max-width:100%;
+  margin:0 auto;
+  position:relative;              /* anchors the fixed .site-logo corner stamp */
+  background:
+    radial-gradient(circle at 12% 4%, #ffffff88 0 40px, transparent 41px),
+    radial-gradient(circle at 88% 7%, #ffffff66 0 30px, transparent 31px),
+    linear-gradient(180deg,var(--sky2),#ddf3ff 170px,var(--paper));
+  border-radius:14px;
+  box-shadow:0 10px 34px #47617c3d;
+  padding:9px 9px 10px;
+}
+
+/* ============ EMBED MODE (embed.html / inside an iframe) ============
+   Drops the outer page chrome so the worksheet sits flush in the host page. */
+body[data-embed]{
+  background:transparent;
+  padding:0;
+  min-height:0;
+}
+body[data-embed] .page{
+  border-radius:0;
+  box-shadow:none;
+  margin:0 auto;
+}
+
+/* ============ SHARED PIECES ============ */
+.pic-emoji{line-height:1; user-select:none;}
+.pv,.t-ic,.ic,.mascot,.obj-img,.draw-deco,.em,.fc{line-height:1;}
+img.pic{object-fit:contain; display:block;}
+.ph{display:grid; place-items:center; background:#f1f6fa; border:1.5px dashed #b9cede; border-radius:8px; color:#8fa6bd;}
+
+/* ============ FIXED SITE LOGO ============
+   ONE logo, EVERY template (config.js → logo). Templates with a native corner
+   slot (cards, lesson plan, golden-minutes) render it in place; the rest get
+   this stamp, pinned to the sheet's top-left corner. */
+.site-logo{
+  position:absolute; top:10px; left:12px; z-index:5;
+  width:var(--lw,84px);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.site-logo img.pic{max-width:100%; max-height:calc(var(--lw,84px) * 1.15);}
+.site-logo .site-logo-emoji{font-size:calc(var(--lw,84px) * .55);}
+.site-logo .ico{width:calc(var(--lw,84px) * .62); height:calc(var(--lw,84px) * .62); color:var(--accent);}
+.site-logo .ph{width:var(--lw,84px); height:calc(var(--lw,84px) * .55);}
+
+/* Writable dotted line, reused by drawing / homework / note sections */
+.wline{
+  min-height:17px;
+  border-bottom:1.6px dotted #a9bcd2;
+  outline:none;
+  font-weight:600; font-size:10.8px;
+  padding:1px 4px;
+  cursor:text;
+}
+.wline:focus{border-bottom-color:var(--c); background:#f6fafe;}
+.lines-list{display:flex; flex-direction:column; gap:4.5px; flex:1; justify-content:space-around;}
+.lines-list .wline{display:flex; align-items:center;}
+
+/* Editable inline identity field (util.js field()). Sits inside value slots
+   that are otherwise plain text — school, teacher, class. currentColor so it
+   adapts to light or dark surroundings; empty shows a dashed line to fill. */
+.ef{
+  display:inline-block; min-width:64px;
+  border-bottom:1px dashed currentColor;
+  line-height:1.35; cursor:text; caret-color:currentColor;
+  opacity:.95;
+}
+.ef:empty{min-width:88px;}
+.ef:empty::before{content:attr(data-ph); opacity:.5;}
+.ef:focus{outline:none; border-bottom-style:solid;}
+
+/* ============ TOOLBAR ============ */
+.toolbar{
+  position:fixed; bottom:14px; left:14px; z-index:50;
+  display:flex; gap:7px;
+}
+.toolbar[hidden]{display:none;}
+.toolbar button{
+  border:2px solid #9fd3f2; background:#fff; color:#2668b3;
+  font:inherit; font-weight:800; font-size:12px;
+  border-radius:999px; padding:5px 13px; cursor:pointer;
+  box-shadow:0 3px 10px #0002;
+  transition:.15s;
+}
+.toolbar button:hover{transform:translateY(-2px); background:#eaf6ff;}
+
+/* ============ LOADING / ERROR STATES ============ */
+.state{
+  min-height:60vh;
+  display:grid; place-items:center;
+  padding:30px 14px;
+}
+.state[hidden]{display:none;}
+.state-card{
+  width:min(560px,100%);
+  background:#fff;
+  border:2px solid #d7e8f5;
+  border-radius:16px;
+  box-shadow:0 10px 30px #47617c26;
+  padding:34px 26px 28px;
+  text-align:center;
+}
+.state-spinner{
+  width:38px; height:38px; margin:0 auto 16px;
+  border:4px solid #dfeefb;
+  border-top-color:#3d87d6;
+  border-radius:50%;
+  animation:state-spin .8s linear infinite;
+}
+.state-spinner[hidden]{display:none;}
+@keyframes state-spin{to{transform:rotate(360deg);}}
+.state-icon{font-size:44px; line-height:1; margin-bottom:10px;}
+.state-icon[hidden]{display:none;}
+.state-title{font-size:19px; font-weight:800; color:#33507a; line-height:1.6;}
+.state-text{font-size:13.5px; font-weight:600; color:#6a7f9b; line-height:1.9; margin-top:8px;}
+.state-text:empty{display:none;}
+.state-code{
+  direction:ltr; text-align:left;
+  background:#f4f8fc; border:1px solid #dde7f1; border-radius:9px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:11.5px; color:#4a6180;
+  padding:10px 12px; margin-top:14px;
+  overflow-x:auto; white-space:pre;
+}
+.state-code[hidden]{display:none;}
+.state-btn{
+  display:inline-block; margin-top:16px;
+  background:#3d87d6; color:#fff; text-decoration:none;
+  font-weight:800; font-size:13px;
+  border-radius:999px; padding:7px 20px 8px;
+  transition:.15s;
+}
+.state-btn[hidden]{display:none;}
+.state-btn:hover{background:#2f6fb4;}
+.state.is-error .state-card{border-color:#f0cdd3;}
+
+/* NOTE: the responsive breakpoints live at the end of layout.css — they have to
+   come AFTER the .page / .grid / .card rules they override. */
+
+@media (prefers-reduced-motion:reduce){
+  .state-spinner{animation-duration:2.4s;}
+  .toolbar button:hover{transform:none;}
+}

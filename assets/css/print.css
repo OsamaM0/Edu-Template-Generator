@@ -1,0 +1,67 @@
+/* ============================================================================
+   print.css — condense to a single A4 page, keep the colors
+   Linked with media="print", so it never costs anything on screen.
+   ========================================================================== */
+
+@page{size:A4 portrait; margin:6mm;}
+
+body{
+  background:#fff;
+  padding:0;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
+/* Screen-only chrome */
+.toolbar,
+.hint,
+.no-print,
+.state{display:none !important;}
+
+.page{
+  width:100%;
+  box-shadow:none;
+  border-radius:0;
+  zoom:.92;
+}
+
+.card{box-shadow:none;}
+
+/* Card templates: never split a card across pages, keep the cut guides crisp. */
+.ic-card,
+.ac-card,
+.ic-cut,
+.ic-head,
+.ic-strip,
+.ac-meta{break-inside:avoid;}
+
+.ic-card,
+.ac-card{box-shadow:none;}
+
+/* The scissors sit on a white gap in the dashed line — keep that gap white. */
+.ic-scissors{background:#fff;}
+
+/* Differentiated lesson plan: dense sheet — shrink a touch more so the whole
+   plan lands on one A4 page, and never split a card or strip. */
+.page[data-template="differentiated-lesson"]{min-height:0; zoom:.86;}
+.dl-card,
+.dl-grp,
+.dl-strip,
+.dl-groups,
+.dl-meta,
+.dl-head{break-inside:avoid;}
+
+/* Golden-minutes card: one A4 page, never split a block. */
+.page[data-template="golden-minutes"]{min-height:0; zoom:.9;}
+.gm-card,
+.gm-vis,
+.gm-head{break-inside:avoid;}
+
+/* Learning-pattern survey: the whole instrument on one A4 page. Keep a row
+   whole — a statement split from its tick cells is unanswerable. */
+.page[data-template="learning-pattern"]{min-height:0; zoom:.92;}
+.lp-card,
+.lp-meta,
+.lp-head,
+.lp-grid,
+.lp-row{break-inside:avoid;}

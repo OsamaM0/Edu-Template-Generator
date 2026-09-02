@@ -1,0 +1,33 @@
+# Keep the image to source + data only.
+.git
+.gitignore
+node_modules
+npm-debug.log*
+
+# Docs, screenshots and tooling output are not needed at runtime.
+README.md
+docs/
+previews/
+
+# Generated pages — the extension rebuilds them on demand.
+data/cache/
+
+# Issued answer sheets (these hold ANSWER KEYS) and submitted student results.
+# Runtime state, and none of it belongs in the repo or in an image.
+data/assignments/
+data/output/
+
+# Secrets reach the container through compose's env_file, never baked into a layer.
+.env
+.env.*
+
+# Local noise
+.playwright-mcp/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+Dockerfile
+docker-compose.yml
+.dockerignore

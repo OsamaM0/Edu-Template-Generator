@@ -1,0 +1,71 @@
+/* ============================================================================
+   theme-pro.css — the "professional" theme (ages 12–18 / formal)
+   ----------------------------------------------------------------------------
+   Everything here is scoped to [data-theme="pro"] on .page, so the playful
+   theme is simply "this file not applying". One accent color, no emoji icons
+   (real image URLs still render — a diagram is content, not decoration).
+   ========================================================================== */
+
+.page[data-theme="pro"]{
+  font-family:"Cairo","Segoe UI",Tahoma,sans-serif;
+  background:#fff;
+  border:1px solid #dbe2ea;
+  box-shadow:0 8px 26px #47617c26;
+}
+
+/* Decoration that has no meaning in a formal document */
+[data-theme="pro"] .pic-emoji,
+[data-theme="pro"] .ph,
+[data-theme="pro"] .cloud,
+[data-theme="pro"] .hero-decor,
+[data-theme="pro"] .hero-grass,
+[data-theme="pro"] .footer-grass span,
+[data-theme="pro"] .sa-face .fc,
+[data-theme="pro"] .draw-deco{display:none;}
+
+[data-theme="pro"] .hero{
+  background:#fff; border:none; border-bottom:2.5px solid var(--accent);
+  border-radius:0; padding:6px 2px 12px; box-shadow:none;
+}
+[data-theme="pro"] .hero-badge{
+  background:none; border:none; box-shadow:none;
+  color:#6a7a90; font-size:12.5px; font-weight:700; letter-spacing:3px; padding:0;
+}
+[data-theme="pro"] .hero-title{
+  background:none; border:none; box-shadow:none;
+  color:var(--accent); font-size:21px; font-weight:800; padding:0; margin-top:3px;
+}
+[data-theme="pro"] .student-bar{
+  border:1.5px solid #dbe2ea; border-radius:8px; background:#fafbfd; box-shadow:none;
+}
+[data-theme="pro"] .student-field label{color:#44536b;}
+[data-theme="pro"] .card{
+  border:1.5px solid #dde3ea; border-inline-start:3.5px solid var(--c);
+  border-radius:8px; box-shadow:none;
+}
+[data-theme="pro"] .card-head{border-radius:6px; justify-content:flex-start; text-align:right;}
+[data-theme="pro"] .card-head .num{border-radius:6px;}
+[data-theme="pro"] .instruction{color:#66788f;}
+[data-theme="pro"] .mcq-row{background:#fafbfd; border-color:#e7ecf2; border-radius:6px;}
+[data-theme="pro"] .opt{gap:4px;}
+[data-theme="pro"] .opt .sl{font-size:10.5px; color:var(--ink);}
+[data-theme="pro"] .mcq-subj .sl{font-size:10.5px; color:var(--c); font-weight:800;}
+[data-theme="pro"] .chip{border-radius:6px;}
+[data-theme="pro"] .need-pill{border-radius:6px;}
+[data-theme="pro"] .m-creature{border:1.5px solid var(--c); border-radius:6px; padding:2.5px 10px; min-width:60px;}
+[data-theme="pro"] .m-creature .sl{font-size:10.5px; color:var(--c); font-weight:800; line-height:1.5;}
+[data-theme="pro"] .info-row .val{color:var(--ink);}
+[data-theme="pro"] .cl-col{border-radius:6px;}
+[data-theme="pro"] .draw-zone{border-color:#c9d4df; border-radius:8px;}
+[data-theme="pro"] .sa-faces{gap:8px;}
+[data-theme="pro"] .sa-face .sl{
+  border:1.5px solid var(--fc); color:var(--fc);
+  border-radius:999px; padding:3px 16px 4.5px; font-size:10.8px;
+  white-space:nowrap;
+}
+[data-theme="pro"] .hint-ic{display:none;}
+[data-theme="pro"] .sa-face.sel .sl{background:var(--fc); color:#fff;}
+[data-theme="pro"] .sig-role{border-radius:6px;}
+[data-theme="pro"] .footer-grass{
+  background:var(--accent); height:5px; margin-top:8px; border-radius:2px;
+}

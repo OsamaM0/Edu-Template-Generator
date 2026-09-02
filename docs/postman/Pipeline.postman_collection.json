@@ -1,0 +1,2408 @@
+{
+  "info": {
+    "_postman_id": "d5a9f4c1-7b28-4e63-9a0f-6c1e2b8d4a37",
+    "name": "Pipeline — Unified document endpoint",
+    "description": "نقطة نهاية واحدة: تعطيها نوع المستند و `document_idx` وبذرة عشوائية، فتقرأ الدرس من\nMongoDB وتعيد رابط صفحة جاهزة ومخزّنة. اطلبها ثانيةً بنفس المدخلات فتحصل على الرابط\nنفسه بلا إعادة بناء.\n\nOne endpoint: give it a document type, a `document_idx` and a seed; it reads the\nlesson from the generator's MongoDB and returns the URL of a finished, cached page.\nAsk again with the same inputs and you get the same URL, unbuilt.\n\n**Two databases, one server.** Lessons are read from the generator's (`ai`) and never\nwritten to; everything this platform produces — documents, links, answers, analyses —\nis written to its own (`activities`). Run `npm run store:check` first: it verifies the\nMongo user can actually WRITE, which a `read`-only user fails only at submission time.\n\n**No roster is stored.** `student_id`, `student_name`, `group_id` and the rest arrive as\nparameters from the calling platform and are kept as snapshots on what is issued.\nFolder *9 · The store* reads back what this service does own.\n\n**Runnable in order.** The first build under *2 · Build a document* stores the page\n`key` and its signed `url` in collection variables, and everything after reuses them.\n\n**Variables** — `baseUrl` (default `http://localhost:8138`), `apiKey` (required when the\nserver runs with `EDU_API_KEY`), `documentIdx`, `seed`; `docKey` and `pageUrl` are filled\nautomatically by any build request.\n\n**Security** — `apiKey` is sent on every `/api/*` call. Page links are signed when the\nserver sets `EDU_PIPELINE_PAGE_SECRET`, so open pages through the captured `pageUrl`, not by\nhand. See the *8 · Security* folder.\n\n**ورقة الطالب** — أرسل `student_id` فتحصل مع الورقة على رابط يُفتح مرة واحدة، يُصحَّح عند التسليم ويُحلَّل لكل هدف. المجلّد السادس يمشي الدورة كاملة.\n\n**المجموعة** — أضِف `group_id` فتصبح أوراق الصف كلها مجموعة واحدة: نداء واحد يصدرها كلها، و `/api/pipeline/group/<id>/dashboard` لوحة تحليل الصف كاملًا مع ملخص كل طالب ورابط إجاباته. المجلّد السابع.\n\nFull documentation: `docs/PIPELINE-API.md`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-Api-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8138",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "documentIdx",
+      "value": "43617",
+      "type": "string"
+    },
+    {
+      "key": "seed",
+      "value": "7",
+      "type": "string"
+    },
+    {
+      "key": "color",
+      "value": "teal",
+      "type": "string"
+    },
+    {
+      "key": "docKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "pageUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "STU-1042",
+      "type": "string"
+    },
+    {
+      "key": "studentName",
+      "value": "أحمد بن سالم",
+      "type": "string"
+    },
+    {
+      "key": "assignmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assignmentToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "answerUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "questionIds",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "groupId",
+      "value": "lesson-43617-oct",
+      "type": "string"
+    },
+    {
+      "key": "groupName",
+      "value": "الخامس/ب — أنواع الجملة",
+      "type": "string"
+    },
+    {
+      "key": "examDate",
+      "value": "2026-09-15",
+      "type": "string"
+    },
+    {
+      "key": "schoolName",
+      "value": "ثانوية الأمير محمد",
+      "type": "string"
+    },
+    {
+      "key": "teacherName",
+      "value": "أ. سارة الحارثي",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 · الحالة والأنواع — Health & types",
+      "description": "هل الإضافة تعمل، وهل قاعدة البيانات متصلة، وما أنواع المستندات المتاحة.",
+      "item": [
+        {
+          "name": "GET /api/pipeline/health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "health"
+              ]
+            },
+            "description": "حالة الإضافة وقاعدة البيانات والتخزين المؤقت، وأي إعدادات ناقصة.\nيبلّغ عن وجود المفاتيح لا عن قيمها.\n\n503 إن لم يُضبط `EDU_PIPELINE_MONGO_URI`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the extension answers\", () => {",
+                  "  pm.expect(pm.response.json().extension).to.eql(\"pipeline\");",
+                  "});",
+                  "const h = pm.response.json();",
+                  "console.log(\"security:\", JSON.stringify(h.security));",
+                  "console.log(\"database:\", JSON.stringify(h.database), \"| cache pages:\", h.cache && h.cache.pages);",
+                  "if (h.warnings) console.log(\"warnings:\", h.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/types",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "types"
+              ]
+            },
+            "description": "أنواع المستندات السبعة، والقالب الذي يصيّره كلٌّ منها، وأسماء الأعداد (counts) التي يقبلها."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"seven document types\", () => {",
+                  "  pm.expect(pm.response.json().types).to.have.lengthOf(7);",
+                  "});",
+                  "console.log(pm.response.json().types.map(t => t.type + \" → \" + t.template).join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · توليد مستند — Build a document",
+      "description": "النوع + `document_idx` + البذرة ⇒ رابط صفحة مخزّنة.\n\nأول طلب هنا (ورقة العمل، POST) هو المرساة: يخزّن `docKey` و `pageUrl` لبقية المجموعة.\nكل طلب توليد لاحق يحدّثهما، فتفتح دائمًا آخر ما بنيته.",
+      "item": [
+        {
+          "name": "POST /api/pipeline/document — ورقة عمل (المرساة)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ]
+            },
+            "description": "الشكل الأساسي للطلب: `{ type, document_idx, seed }`.\n\nيعيد `url` (موقّع)، و `embedUrl`/`printUrl`/`imageUrl`/`downloadUrl`، و `dataUrl`،\nمع `used` (كم سؤالًا من كل نوع رُسم) و `sources` (أي المجموعات وُجدت).\n\n201 عند البناء لأول مرة، و 200 عند الإرجاع من التخزين المؤقت.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"worksheet\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=cards — بطاقات أسئلة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=cards&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "cards"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "بطاقات مراجعة قابلة للقص، سؤال في كل بطاقة. البذرة تحدّد أي الأسئلة تُختار."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=answers — مفتاح الإجابة (نفس البذرة)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=answers&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "answers"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "مفتاح الإجابة المطابق لبطاقات الأسئلة بنفس البذرة — نفس الأسئلة، نفس الترتيب.\n\n`answers` تسحب من نفس مجاري البذرة التي تسحب منها `cards`، فـ `seed` واحد يعطيك\nالدفتر ومفتاحه."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=lesson-plan — خطة درس متمايزة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=lesson-plan&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "lesson-plan"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "خطة درس للمعلّم: ثلاث مجموعات حسب الأولوية، أنشطة وتقويم متمايز، من بيانات ورقة العمل والملخّص."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=golden-minutes — بطاقة الدقائق الذهبية",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=golden-minutes&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "golden-minutes"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "بطاقة الحصة: أول خمس دقائق وآخر خمس دقائق وقرار المعلّم، بسؤال ومهمة من الدرس."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=summary — ملخّص الدرس",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=summary&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "summary"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "ورقة مراجعة: نصّ الملخّص مقسّمًا إلى بطاقات، مع المفردات والتطبيقات وسؤال مراجعة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=learning-pattern — استبيان أنماط التعلم",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=learning-pattern&document_idx={{documentIdx}}&seed={{seed}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "learning-pattern"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                }
+              ]
+            },
+            "description": "استبيان تحديد أنماط التعلم (بصري، سماعي، حركي، قراءة/كتابة) — يصحّح نفسه في المتصفح.\n\nالعبارات أداة قياس ثابتة لا تُولَّد من الدرس؛ الدرس يمنح الورقة لونها الثابت،\nو `student` يعبّئ صف بيانات الطالب. `count.questions=N` يسحب N عبارات **لكل نمط**\nحتى تبقى السقوف متساوية بين الأنماط الأربعة.\n\nالأسماء البديلة: `learning-styles` · `style-survey` · `vark`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/pipeline/document — أعداد مخصّصة (counts)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ]
+            },
+            "description": "`counts` يتحكّم بكم يُسحب من كل نوع. `0` يعني \"لا شيء\"، وطلب أكثر من المتوفّر يعطيك المتوفّر كلّه.\n\nعلى الرابط استخدم `count.multiple_choice=5` — الأسماء نفسها التي يعرضها `/types`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"cards\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\",\n  \"counts\": {\n    \"multiple_choice\": 5,\n    \"true_false\": 0,\n    \"complete\": 0,\n    \"short_answer\": 0\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));",
+                  "pm.test(\"only the requested kind was drawn\", () => {",
+                  "  const used = pm.response.json().used;",
+                  "  pm.expect(used.multiple_choice).to.eql(5);",
+                  "  pm.expect(used.true_false || 0).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?exam_date=… — تاريخ الاختبار على الورقة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=worksheet&document_idx={{documentIdx}}&seed={{seed}}&exam_date={{examDate}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "worksheet"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                },
+                {
+                  "key": "exam_date",
+                  "value": "{{examDate}}",
+                  "description": "2026-09-15 — أو أي نص يُطبع كما هو"
+                }
+              ]
+            },
+            "description": "كل قالب يحمل خانة تاريخ، وكانت تُطبع فارغة ليكتبها أحدهم بخطّ اليد.\n`exam_date` يملؤها، فيصل الصفّ كلّه بأوراق متفقة على موعد الجلسة.\n\n**تاريخ يبدأ بالسنة** (`2026-09-15` أو `2026/9/5` أو طابع ISO كامل) يُقرأ ويُطبع\nبالعربية: *15 سبتمبر 2026*. أي شيء آخر يُطبع **كما أُرسل**، فـ `الأسبوع الرابع`\nجوابٌ صالح أيضًا. الصيغ التي تبدأ باليوم (`15/09/2026`) لا تُقرأ: معناها يختلف\nباختلاف البلد، وورقة تطبع اليوم الخطأ بصمت أسوأ من ورقة تطبع النص كما هو.\n\nالتاريخ المُعبّأ يُطبع نصًّا مقفلًا لا سطرًا قابلًا للكتابة: جلسة لها موعد\nلا يصحّ أن تعود موسومة بموعد آخر. بلا `exam_date` تبقى الخانة فارغة كما كانت.\n\n**جزء من مفتاح التخزين**: الورقة نفسها في يومين ورقتان. الرد يعيده في\n`exam_date` (اليوم بصيغة ISO) و `exam_date_text` (ما تُظهره الورقة).\n\nمرادفات: `date` · `exam_day` · `test_date` · `sitting_date`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));",
+                  "pm.test(\"the date came back both ways\", () => {",
+                  "  pm.expect(b.exam_date).to.be.a(\"string\").and.not.empty;",
+                  "  pm.expect(b.exam_date_text).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "console.log(\"exam date:\", b.exam_date, \"→\", b.exam_date_text);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?school=…&teacher=… — المدرسة والمعلم على الترويسة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=worksheet&document_idx={{documentIdx}}&seed={{seed}}&school={{schoolName}}&teacher={{teacherName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "worksheet"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                },
+                {
+                  "key": "school",
+                  "value": "{{schoolName}}",
+                  "description": "اسم المدرسة — يُطبع في خانة المدرسة"
+                },
+                {
+                  "key": "teacher",
+                  "value": "{{teacherName}}",
+                  "description": "اسم المعلم — يُطبع في خانة المعلم"
+                }
+              ]
+            },
+            "description": "ترويسة كل ورقة تحمل خانتي **المدرسة** و **المعلم / المعلمة**، وكانتا تُطبعان\nفارغتين ليكتبهما أحدهم. `school` و `teacher` يملآنهما، تمامًا كما يملأ\n`exam_date` خانة التاريخ.\n\n**القيمة المجرّدة هي الاسم** لا المعرّف — عكس `student` — لأن لا كشف مدارس\nولا كشف معلمين في هذه القاعدة: المدارس والمعلمون والصفوف تخصّ المنصّة\nالمستدعية وتصل كمعاملات، والاسم هو النصف الذي يُطبع. أرسل المعرّف أيضًا\n(`school_id` و `teacher_id`) فيُحفظ ويعود كما أُرسل بلا بحث عنه.\n\nثلاث صيغ كالطالب: `?school=…` أو `?school_id=…&school_name=…` أو\n`{ \"school\": { \"id\": …, \"name\": … } }`.\n\n**جزء من مفتاح التخزين**: مدرستان لا تتقاسمان صفحة واحدة. ما يُرسَل يُحفظ\nعلى الورقة المُصدَرة وعلى سجلّ المستند وعلى التحليل، ويظهر في تقرير الطالب\nوفي لوحة المجموعة. بلا معاملات تبقى الخانتان فارغتين قابلتين للكتابة كما كانتا."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));",
+                  "pm.test(\"the header came back\", () => {",
+                  "  pm.expect(b.school.name).to.be.a(\"string\").and.not.empty;",
+                  "  pm.expect(b.teacher.name).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "console.log(\"header:\", b.school.name, \"·\", b.teacher.name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=worksheet&theme=playful — نمط مختلف",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=worksheet&document_idx={{documentIdx}}&seed={{seed}}&theme=playful",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "worksheet"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                },
+                {
+                  "key": "theme",
+                  "value": "playful",
+                  "description": "playful | pro — يتجاوز الافتراضي pro"
+                }
+              ]
+            },
+            "description": "النمط جزء من الصفحة، فله مفتاح تخزين خاص به. `playful` نمط مرح ملوّن، `pro` احترافي هادئ."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?type=cards&color=teal — اللون الرئيسي",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=cards&document_idx={{documentIdx}}&seed={{seed}}&color={{color}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "cards"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                },
+                {
+                  "key": "color",
+                  "value": "{{color}}",
+                  "description": "اسم لون (teal, blue, purple…) أو hex مثل #177a6c"
+                }
+              ]
+            },
+            "description": "`color` يحدّد اللون الرئيسي للصفحة، متجاوزًا لون الدرس الثابت.\n\nيقبل أسماء الألوان (blue · sky · green · orange · yellow · purple · pink · red · teal)\nأو قيمة hex مثل `#177a6c`. لونٌ غير صالح يُتجاهَل مع ملاحظة، ويبقى لون الدرس.\n\nاللون جزء من مفتاح التخزين، فلكل لون صفحته المخزّنة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));",
+                  "pm.test(\"the color was applied\", () => {",
+                  "  pm.expect(pm.response.json().color).to.eql(pm.collectionVariables.get(\"color\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/pipeline/document?format=html — الصفحة مباشرةً",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?format=html",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "html",
+                  "description": "json (افتراضي) | html | redirect"
+                }
+              ]
+            },
+            "description": "`format=html` يعيد صفحة HTML بدل وصفها بـ JSON — بناء ومعاينة في طلب واحد.\n\n(`format=redirect` يعيد 302 إلى رابط الصفحة الموقّع؛ يتبعه Postman تلقائيًا.)",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"cards\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page, built by this extension\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "  pm.expect(pm.response.headers.get(\"X-Pipeline-Key\")).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · الصفحة وبياناتها — The page & its data",
+      "description": "افتح الصفحة المبنيّة، واقرأ الـ JSON الذي صُيّرت منه، وسجلّها ووصفها.",
+      "item": [
+        {
+          "name": "GET {{pageUrl}} — الصفحة الموقّعة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{pageUrl}}",
+            "description": "الصفحة نفسها، عبر الرابط الموقّع الذي التقطه آخر طلب توليد.\n\nافتح تبويب **Preview** لرؤيتها كما في المتصفح. الترويسة `X-Pipeline-Key` تؤكّد المفتاح المخدوم."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page, built by this extension\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "  pm.expect(pm.response.headers.get(\"X-Pipeline-Key\")).to.be.a(\"string\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET {{pageUrl}}&embed=1 — نسخة التضمين",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{pageUrl}}&embed=1",
+            "description": "نفس الرابط الموقّع مع `&embed=1`: تُبنى نسخة التضمين تحت مفتاحها وتُخدَم.\n\nالتوقيع يغطّي المفتاح الأصلي في المسار، فإضافة معاملات العرض إليه مسموحة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"an HTML page, built by this extension\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"<div class=\\\"page\\\"\");",
+                  "  pm.expect(pm.response.headers.get(\"X-Pipeline-Key\")).to.be.a(\"string\");",
+                  "});",
+                  "pm.test(\"embedded chrome\", () => pm.expect(pm.response.text()).to.include(\"data-embed=\\\"1\\\"\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET {{pageUrl}}&download=1 — تنزيل كملف",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{pageUrl}}&download=1",
+            "description": "يضيف `Content-Disposition: attachment` فيحفظ المتصفح الملف. الأسماء العربية مدعومة (RFC 5987)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"served as a download\", () => {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/document/{{docKey}} — سجلّ الصفحة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document/{{docKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document",
+                "{{docKey}}"
+              ]
+            },
+            "description": "ماذا بُني تحت هذا المفتاح: النوع والقالب والبذرة و `used` و `sources` وروابط الصفحة الموقّعة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the record comes back\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json().key).to.eql(pm.collectionVariables.get(\"docKey\"));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/data/{{docKey}} — بيانات ورقة العمل",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/data/{{docKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "data",
+                "{{docKey}}"
+              ]
+            },
+            "description": "الـ JSON الذي صُيّرت منه الصفحة — نفس ما يقبله `POST /api/render` في الواجهة الأساسية."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"worksheet JSON\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.have.property(\"meta\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · الدرس الخام — Inspect the lesson",
+      "description": "الدرس بعد التوحيد من المجموعات الثلاث — للفحص وبناء الطلبات.",
+      "item": [
+        {
+          "name": "GET /api/pipeline/lesson/{{documentIdx}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/lesson/{{documentIdx}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "lesson",
+                "{{documentIdx}}"
+              ]
+            },
+            "description": "الدرس المُوحّد: الأهداف والأسئلة (مبوّبة) والمفردات والتطبيقات والملخّص، مع `found` لأي\nالمجموعات وُجدت و `questionCount` لإجمالي الأسئلة المتاحة.\n\nلا يبني صفحة ولا يستهلك التخزين — نافذة على البيانات فقط."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"lesson resolved\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.have.property(\"found\");",
+                  "});",
+                  "const l = pm.response.json();",
+                  "console.log(l.title, \"| questions:\", l.questionCount, \"| found:\", JSON.stringify(l.found));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · التخزين المؤقت — Cache",
+      "description": "ماذا هو مخزّن، وكيف تُسقط صفحة أو تُفرغ الكل. المفاتيح مشتقّة، فالحذف يعني إعادة البناء عند الطلب التالي.",
+      "item": [
+        {
+          "name": "GET /api/pipeline/cache — القائمة والإحصاءات",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "cache"
+              ]
+            },
+            "description": "عدد الصفحات وحجمها ومكان المجلّد، مع قائمة بما بُني."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"cache stats\", () => pm.response.to.have.status(200));",
+                  "console.log(\"pages:\", pm.response.json().pages && pm.response.json().pages.length);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/pipeline/document/{{docKey}} — أسقط صفحة",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document/{{docKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document",
+                "{{docKey}}"
+              ]
+            },
+            "description": "يحذف الصفحة المخزّنة. الطلب التالي بنفس المدخلات يعيد بناءها بالمفتاح نفسه."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"deleted (or already gone)\", () => {",
+                  "  pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/pipeline/cache — أفرغ الكل",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/cache",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "cache"
+              ]
+            },
+            "description": "يمسح كل الصفحات المبنيّة وذاكرة الدروس. يعيد عدد ما حُذف."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"cleared\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.have.property(\"cleared\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · ورقة الطالب والتحليل — Issue, answer, analyse",
+      "description": "دورة حياة ورقة تُسلَّم لطالب بعينه: إصدار رابط يُفتح مرة واحدة، تسليم الإجابات\nعلى شكل `{question_id: answer}`، ثم تحليل يربط كل سؤال بهدفه ويعطي نسبة تحقّق\nلكل هدف مع توصية مكتوبة.\n\n**Runnable in order.** الطلب الأول يخزّن `assignmentId` و `answerUrl` و\n`assignmentToken`، وما بعده يستعملها. التسليم يُبطل الرابط — أعد تشغيل المجلّد\nمن أوله للحصول على رابط جديد.\n\n`/submit` و `/result` و `/report` لا تطلب `X-Api-Key`: الطالب لا يملكها، ويثبت\nهويته بالرمز `t` الذي في رابطه.",
+      "item": [
+        {
+          "name": "POST /api/pipeline/assign — إصدار رابط لطالب",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "assign"
+              ]
+            },
+            "description": "يبني الورقة، يطبع اسم الطالب ورقمه عليها، ويصدر رابطًا يُفتح مرة واحدة.\n\nكل استدعاء يصدر رابطًا **جديدًا** برقم ورمز جديدين — وهذا هو المقصود:\n«محاولة أخرى» تعني إصدارًا جديدًا، لا إحياء رابط مستهلك.\n\n`group_id` يودع هذه الورقة في مجموعة — وهو ما تقرؤه لوحة التحليل في\nالمجلّد السابع. لا يظهر على الصفحة ولا يدخل في مفتاح التخزين المؤقت.\n\nالشيء نفسه يحدث تلقائيًا إذا أرسلت `student_id` إلى `/document`،\nفتحصل على نسخة الطباعة ورابط الطالب في ردٍّ واحد. `assign=0` يلغي ذلك.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"worksheet\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\",\n  \"group_id\": \"{{groupId}}\",\n  \"group_name\": \"{{groupName}}\",\n  \"school\": \"{{schoolName}}\",\n  \"teacher\": \"{{teacherName}}\",\n  \"student\": {\n    \"id\": \"{{studentId}}\",\n    \"name\": \"{{studentName}}\",\n    \"classroom\": \"الخامس/ب\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 issued\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a single-use answer link\", () => {",
+                  "  pm.expect(b).to.have.property(\"assignment_id\");",
+                  "  pm.expect(b.answer_url).to.include(\"/a/\");",
+                  "  pm.expect(b.status).to.eql(\"issued\");",
+                  "});",
+                  "pm.collectionVariables.set(\"assignmentId\", b.assignment_id);",
+                  "pm.collectionVariables.set(\"answerUrl\", b.answer_url);",
+                  "pm.collectionVariables.set(\"assignmentToken\", new URL(b.answer_url).searchParams.get(\"t\"));",
+                  "console.log(b.question_count, \"questions ·\", b.goal_count, \"goals\");",
+                  "console.log(\"student link:\", b.answer_url);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /a/:id — الورقة كما يراها الطالب",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{answerUrl}}",
+              "host": [
+                "{{answerUrl}}"
+              ]
+            },
+            "description": "الصفحة القابلة للحل. تحمل معرّف كل سؤال (`data-qid`) وطبقة `answer.js`\nالتي تجمع الإجابات وترسلها.\n\n**لا تحمل الإجابات النموذجية.** مفتاح التصحيح يبقى على الخادم بجانب الإصدار،\nفالصفحة التي بيد الطالب لا تعرف الإجابة الصحيحة.\n\nفتحها يُسجَّل (`opened_at`) ولا يستهلكها — الاستهلاك يحدث عند التسليم وحده.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200, and answerable\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.text()).to.include(\"window.EDU_ANSWER\");",
+                  "  pm.expect(pm.response.text()).to.include(\"data-qid=\");",
+                  "});",
+                  "const ids = [...pm.response.text().matchAll(/data-qid=\"([^\"]+)\"/g)].map(m => m[1]);",
+                  "pm.collectionVariables.set(\"questionIds\", JSON.stringify(ids));",
+                  "console.log(\"question ids on the sheet:\", ids.join(\" \"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/pipeline/submit — تسليم الإجابات",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "submit"
+              ]
+            },
+            "description": "`{ assignment_id, token, answers }` حيث `answers` هو `{question_id: answer}`.\nاستبدل الأمثلة بالمعرّفات التي طبعها الطلب السابق في `questionIds`.\n\nالإجابة تُقبل بأي صياغة معقولة: نص الخيار أو حرفه أو رقمه، و«صح/خطأ» أو\n`true/false`، والتشكيل وهمزات الألف والتاء المربوطة لا تُفشل المطابقة.\n\nيعيد التحليل كاملًا: نسبة لكل هدف، وتقرير مكتوب، ونتيجة الإرسال إلى الخلفية.\n**ويُبطل الرابط** — الطلب التالي على نفس الرابط يعود بـ 410.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"assignment_id\": \"{{assignmentId}}\",\n  \"token\": \"{{assignmentToken}}\",\n  \"answers\": {\n    \"mc_1\": \"الجملة الاسمية\",\n    \"tf_1\": \"خطأ\",\n    \"cp_1\": \"الفعلية\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 graded\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"per-goal analysis came back\", () => {",
+                  "  pm.expect(b.overall).to.have.property(\"percentage\");",
+                  "  pm.expect(Object.keys(b.goals).length).to.be.above(0);",
+                  "});",
+                  "console.log(b.overall.correct + \"/\" + b.overall.total, \"·\", b.overall.percentage + \"%\", \"·\", b.overall.mastery_label);",
+                  "Object.values(b.goals).forEach(g =>",
+                  "  console.log(g.goal_id, g.percentage + \"%\", g.correct + \"/\" + g.total, g.goal_text));",
+                  "console.log(\"report:\", b.report.summary);",
+                  "console.log(\"saved to:\", b.output && b.output.json);",
+                  "console.log(\"backend:\", JSON.stringify(b.delivery));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /a/:id — بعد التسليم (يُتوقّع 410)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{answerUrl}}",
+              "host": [
+                "{{answerUrl}}"
+              ]
+            },
+            "description": "الرابط استُهلك. يعود بصفحة عربية تشرح ذلك، لا برسالة خطأ JSON —\nمن يفتحه طالب ضغط رابطًا، لا برنامج يقرأ ردًّا.\n\nلإعطاء الطالب محاولة أخرى: أعد `POST /assign`، فيصدر رابط جديد.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the link is spent\", () => pm.response.to.have.status(410));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/result/:id — التحليل JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/result/{{assignmentId}}?t={{assignmentToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "result",
+                "{{assignmentId}}"
+              ],
+              "query": [
+                {
+                  "key": "t",
+                  "value": "{{assignmentToken}}"
+                }
+              ]
+            },
+            "description": "التحليل المحفوظ. يقرؤه صاحب `X-Api-Key` أو حامل رمز الإصدار نفسه —\nوهذا ما يجعل متصفح الطالب قادرًا على فتح تقريره مباشرة بعد التسليم.\n\nالشكل: `goals[goal_id] = { percentage, correct, wrong, total, mastery, recommendation }`.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 with the goal breakdown\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.json()).to.have.property(\"goals\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/report/:id — صفحة التحليل",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/report/{{assignmentId}}?t={{assignmentToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "report",
+                "{{assignmentId}}"
+              ],
+              "query": [
+                {
+                  "key": "t",
+                  "value": "{{assignmentToken}}"
+                }
+              ]
+            },
+            "description": "التحليل نفسه كصفحة HTML قائمة بذاتها: نسبة عامة، ثم الأهداف من الأضعف\nإلى الأقوى مع توصية لكل هدف، ثم الإجابات سؤالًا بسؤال. صالحة للطباعة.\n\nتُكتب النسخة نفسها في `EDU_PIPELINE_OUTPUT_DIR` عند كل تسليم.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"an analysis page\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.text()).to.include(\"تحليل نتائج\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/assignments — ما صدر لهذا الطالب",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/assignments?student_id={{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "assignments"
+              ],
+              "query": [
+                {
+                  "key": "student_id",
+                  "value": "{{studentId}}"
+                }
+              ]
+            },
+            "description": "كل ما صدر لطالب، الأحدث أولًا: الحالة، وقت الفتح، وقت التسليم، وروابط النتيجة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log(b.count, \"assignments\");",
+                  "b.assignments.slice(0, 5).forEach(a =>",
+                  "  console.log(a.assignment_id, a.status, a.type, a.submitted_at || \"—\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/pipeline/assignment/:id — إلغاء رابط",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/assignment/{{assignmentId}}?reason=issued to the wrong student",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "assignment",
+                "{{assignmentId}}"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "issued to the wrong student"
+                }
+              ]
+            },
+            "description": "يُبطل رابطًا لم يُسلَّم بعد — أُرسل لطالب خطأ، أو أُلغي الاختبار.\n\nالرابط المُسلَّم أصلًا يبقى مُسلَّمًا: نتيجته محفوظة ولا يُمسّ."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "console.log(pm.response.json().note);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 · المجموعة ولوحة التحليل — Group & dashboard",
+      "description": "`group_id` واحد يجمع أوراق صف كامل. أضِفه عند الإصدار، فتقرأ كل نقاط النهاية\nهنا كل ما صدر تحته: من سلّم، متوسط المجموعة، الأهداف التي تحتاج إعادة شرح،\nالأسئلة التي سقطت، ثم ملخص كل طالب ومعه رابط إجاباته الكاملة.\n\n**المعرّف حرّ**: رقم درس، رمز صف، جلسة اختبار، فصل دراسي — لا شيء يسجّله مسبقًا،\nوالمجموعة تُكتشف من الأوراق التي تحمله.\n\n**ليس جزءًا من مفتاح التخزين المؤقت**: لا يغيّر شيئًا على الصفحة المطبوعة،\nفصفّان يحلّان الدرس نفسه يتشاركان النسخة المبنيّة نفسها.\n\nلا تُخزَّن اللوحة مؤقتًا: الأرقام تتغيّر مع كل تسليم، ولوحة متأخّرة بتسليمٍ واحد\nلوحة يتوقّف المعلم عن تصديقها.",
+      "item": [
+        {
+          "name": "POST /api/pipeline/assign — إصدار صف كامل بمجموعة واحدة",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/assign",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "assign"
+              ]
+            },
+            "description": "مصفوفة `students` تصدر رابطًا لكل طالب، كلها تحت `group_id` واحد.\n\nصفٌّ فيه سطر لا يسمّي أحدًا **يُبلَّغ عنه ولا يُفشل الطلب**: كشف منسوخ من جدول\nفيه أسطر فارغة، وإسقاط تسعة وثلاثين رابطًا بسبب الأربعين خيارٌ خاطئ.\nانظر `skipped` في الرد.\n\n200 طالبًا كحدٍّ أقصى للنداء الواحد؛ الصف الأكبر عدة نداءات بالمعرّف نفسه —\nتقع كلها في المجموعة نفسها. البناء يجري ورقةً بعد ورقة لا دفعةً واحدة.\n\nالإصدار فرديًا يعطي النتيجة نفسها: نادِ `/assign` ثلاثين مرة بالمعرّف نفسه.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"worksheet\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\",\n  \"group_id\": \"{{groupId}}\",\n  \"group_name\": \"{{groupName}}\",\n  \"students\": [\n    {\n      \"id\": \"STU-1042\",\n      \"name\": \"أحمد بن سالم\",\n      \"classroom\": \"الخامس/ب\"\n    },\n    {\n      \"id\": \"STU-1043\",\n      \"name\": \"سارة الحارثي\",\n      \"classroom\": \"الخامس/ب\"\n    },\n    {\n      \"id\": \"STU-1044\",\n      \"name\": \"خالد العامري\",\n      \"classroom\": \"الخامس/ب\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 issued\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"one link per student, all in one group\", () => {",
+                  "  pm.expect(b.issued).to.be.above(0);",
+                  "  pm.expect(b.assignments[0].group_id).to.eql(b.group.id);",
+                  "  pm.expect(b.dashboard_url).to.include(\"/dashboard\");",
+                  "});",
+                  "pm.collectionVariables.set(\"groupId\", b.group.id);",
+                  "b.assignments.forEach(a => console.log(a.student.name, \"→\", a.answer_url));",
+                  "if (b.skipped) console.log(\"skipped:\", JSON.stringify(b.skipped));",
+                  "console.log(\"dashboard:\", b.dashboard_url);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/pipeline/batch — كشف طلاب ← قائمة روابط اختبار",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/batch",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "batch"
+              ]
+            },
+            "description": "`‎/assign` يصدر رابطًا **واحدًا** ثم نمت فيه مصفوفة `students` تسهيلًا.\n`‎/batch` معكوسه: الكشف هو المقصود، فهو مطلوب، ولا حاجة إلى طالب في أعلى الطلب،\nوالرد **يبدأ بمصفوفة `links` مسطّحة** — سطر لكل طالب، فيه رابط الاختبار مباشرة.\nهذا هو الشكل الذي يُدمج في رسالة أو يُكتب في نظام آخر بلا تنقيب.\n\n**سطر الكشف** إمّا رقم طالب مجرّد أو كائن. الكائن يسمّي الطالب\n(`id` و `name` و `classroom` و `section`) وقد يعيد توجيه الطلب **لهذا الطالب وحده**:\n`seed` (سحبة خاصة به) و `exam_date` (موعد بديل) و `document_idx` و `type`.\n\n**`unique_seed`** يعطي كل طالب سحبته الخاصة من الدرس نفسه — لا ورقتان في القاعة\nبالأسئلة نفسها. البذرة مشتقّة من `seed` النداء وهوية الطالب لا من عشوائيّة، فالنداء\n**قابل للإعادة**: تكراره يعيد لكل طالب الورقة التي بيده لا ورقة جديدة.\n\n**النجاح الجزئي نجاح**: سطر لا يسمّي أحدًا يُبلَّغ عنه في `skipped` وتعود بقيّة\nالروابط. `ok: false` فقط حين لا يمكن إصدار أي رابط (422).\n\n**الأرقام وحدها** تمرّ عبر الاستعلام: `?students=STU-1042,STU-1043`.\n\n200 طالبًا كحدٍّ أقصى للنداء الواحد (`EDU_PIPELINE_ROSTER_LIMIT`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"worksheet\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\",\n  \"exam_date\": \"{{examDate}}\",\n  \"school\": \"{{schoolName}}\",\n  \"teacher\": \"{{teacherName}}\",\n  \"group_id\": \"{{groupId}}\",\n  \"group_name\": \"{{groupName}}\",\n  \"unique_seed\": true,\n  \"students\": [\n    \"STU-1042\",\n    {\n      \"id\": \"STU-1043\",\n      \"name\": \"سارة الحارثي\",\n      \"classroom\": \"الخامس/ب\"\n    },\n    {\n      \"id\": \"STU-1044\",\n      \"name\": \"خالد العامري\",\n      \"classroom\": \"الخامس/ب\",\n      \"exam_date\": \"2026-09-22\",\n      \"seed\": 12\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 issued\", () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"a flat link per student\", () => {",
+                  "  pm.expect(b.issued).to.be.above(0);",
+                  "  pm.expect(b.links).to.be.an(\"array\").with.lengthOf(b.issued);",
+                  "  pm.expect(b.links[0]).to.have.property(\"exam_url\");",
+                  "  pm.expect(b.links[0]).to.have.property(\"student_id\");",
+                  "});",
+                  "pm.test(\"every sheet carries the exam date\", () => {",
+                  "  pm.expect(b.exam_date).to.be.a(\"string\").and.not.empty;",
+                  "});",
+                  "pm.test(\"unique_seed gave each student their own draw\", () => {",
+                  "  const seeds = new Set(b.links.map(l => l.seed));",
+                  "  pm.expect(seeds.size).to.eql(b.links.length);",
+                  "});",
+                  "pm.collectionVariables.set(\"groupId\", b.group.id);",
+                  "b.links.forEach(l => console.log(l.student_id, l.student_name, \"→\", l.exam_url));",
+                  "if (b.skipped) console.log(\"skipped:\", JSON.stringify(b.skipped));",
+                  "console.log(\"dashboard:\", b.dashboard_url);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/groups — المجموعات الموجودة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/groups",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "groups"
+              ]
+            },
+            "description": "المجموعات التي صدرت أوراق تحتها، الأحدث نشاطًا أولًا: عدد الطلاب،\nكم سلّم، نسبة التسليم، والدروس التي تغطّيها المجموعة.\n\n`?document_idx=` و `?status=` يضيّقان القائمة."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log(b.count, \"groups\");",
+                  "b.groups.slice(0, 5).forEach(g =>",
+                  "  console.log(g.group_id, \"|\", g.submitted + \"/\" + g.issued, \"سلّموا |\", g.group_name));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/group/:id — التحليل الكامل JSON",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/group/{{groupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "group",
+                "{{groupId}}"
+              ]
+            },
+            "description": "تحليل المجموعة كاملًا: `participation` قبل أي متوسط، ثم `overall`،\nثم `goals` من الأضعف إلى الأقوى، ثم `questions` من الأصعب، ثم `students`.\n\n**الطلاب الذين لم يسلّموا يبقون في الصورة** بـ `percentage: null` —\nلوحة تُسقط من لم يسلّم وتحسب متوسط الباقين أسوأ من لا لوحة.\n\n**كل رقم يحتفظ بطريق العودة**: كل صف طالب يحمل `report_url` و `result_url`،\nو `goals[].students_needing_work` يسمّي من هم دون 60% عند الهدف نفسه."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 with the group roll-up\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.schema).to.eql(\"pipeline.group-analysis/1\");",
+                  "  pm.expect(b).to.have.property(\"participation\");",
+                  "  pm.expect(b).to.have.property(\"students\");",
+                  "});",
+                  "const b = pm.response.json();",
+                  "console.log(b.report.headline);",
+                  "console.log(\"سلّم\", b.participation.submitted + \"/\" + b.participation.issued,",
+                  "  \"| متوسط\", b.overall.average_percentage + \"%\", \"|\", b.overall.mastery_label);",
+                  "b.goals.forEach(g => console.log(\" هدف\", g.goal_id, String(g.average_percentage) + \"%\",",
+                  "  \"دون 60%:\", g.struggling, \"|\", g.goal_text));",
+                  "b.questions.slice(0, 3).forEach(q => console.log(\" أصعب:\", q.success_rate + \"%\", q.question));",
+                  "b.students.forEach(s => console.log(\" \", s.student_name || s.student_id,",
+                  "  s.answered ? s.percentage + \"% \" + s.mastery_label : \"لم يسلّم\", \"→\", s.report_url));",
+                  "b.report.next_steps.forEach(t => console.log(\" ⇦\", t));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/group/:id/dashboard — اللوحة كصفحة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/group/{{groupId}}/dashboard",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "group",
+                "{{groupId}}",
+                "dashboard"
+              ]
+            },
+            "description": "التحليل نفسه كصفحة HTML قائمة بذاتها وصالحة للطباعة، مرتّبة بترتيب أسئلة\nالمعلم: هل سلّموا أصلًا ← كيف كان أداء الصف ← ما الذي لم يفهمه الصف ←\nأي الأسئلة سقطت ← من يحتاجني، وأين ورقته.\n\nالقسم الأخير هو المقصود: جدول بكل طالب، وكل صف يقود إلى تقريره الكامل\nوإجاباته. لا شيء في الصفحة طريق مسدود.\n\nافتحها بـ **Send** ثم `Preview` في بوستمان، أو انسخ الرابط إلى المتصفح."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"a dashboard page\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"text/html\");",
+                  "  pm.expect(pm.response.text()).to.include(\"لوحة تحليل المجموعة\");",
+                  "  pm.expect(pm.response.text()).to.include(\"ملخص الطلاب\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/group/:id/answers — كل إجابات المجموعة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/group/{{groupId}}/answers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "group",
+                "{{groupId}}",
+                "answers"
+              ]
+            },
+            "description": "كل ما أرسله كل طالب في المجموعة: `answers` كما وصلت حرفيًا\n(`{question_id: answer}`) ثم قراءتها المصحَّحة سؤالًا بسؤال بجانبها.\n\nمنفصلة عن التحليل عمدًا: اللوحة هي ما **تعنيه** إجابات الصف، وهذه هي ما\n**قاله** الصف — ومن يصدّر الإجابات إلى نظامه لا ينبغي أن ينزّل التحليل معها.\n\n`pending` جزء من العقد: «كل الإجابات» لا تكون صادقة ما لم تقل إجابات مَن\nالناقصة. `?student_id=` يقصرها على طالب واحد."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 with raw + graded answers\", () => {",
+                  "  pm.response.to.have.status(200);",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(b.schema).to.eql(\"pipeline.group-answers/1\");",
+                  "  pm.expect(b).to.have.property(\"submissions\");",
+                  "  pm.expect(b).to.have.property(\"pending\");",
+                  "});",
+                  "const b = pm.response.json();",
+                  "console.log(b.submitted, \"سلّموا ·\", b.pending.length, \"لم يسلّموا\");",
+                  "b.submissions.forEach(s => {",
+                  "  console.log(\"—\", s.student.name, s.overall.percentage + \"%\");",
+                  "  console.log(\"  raw:\", JSON.stringify(s.answers));",
+                  "  s.questions.filter(q => !q.correct).forEach(q =>",
+                  "    console.log(\"   ✗\", q.question, \"| أجاب:\", q.student_answer || \"—\", \"| الصواب:\", q.correct_answer));",
+                  "});",
+                  "b.pending.forEach(p => console.log(\"⏳\", p.student && p.student.name, p.answer_url));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/assignments?group_id — سجلات المجموعة الخام",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/assignments?group_id={{groupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "assignments"
+              ],
+              "query": [
+                {
+                  "key": "group_id",
+                  "value": "{{groupId}}"
+                }
+              ]
+            },
+            "description": "الأوراق نفسها لا تحليلها: الحالة، وقت الفتح، وقت التسليم، والروابط. يقبل `status=` و `document_idx=` أيضًا."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log(b.count, \"assignments in this group\");",
+                  "b.assignments.forEach(a => console.log(a.status.padEnd(10), a.student && a.student.name, a.assignment_id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/pipeline/group/:id — إغلاق المجموعة",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/group/{{groupId}}?reason=انتهى وقت الاختبار",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "group",
+                "{{groupId}}"
+              ],
+              "query": [
+                {
+                  "key": "reason",
+                  "value": "انتهى وقت الاختبار"
+                }
+              ]
+            },
+            "description": "يُبطل كل رابط لم يُسلَّم بعد، ولا يمسّ ورقة سُلِّمت.\n\n«انتهى الاختبار» يجب ألّا تمتدّ إلى عمل سلّمه طالب: نتائج المسلَّمين تبقى\nمقروءة واللوحة تظل تعرضها، وتنتقل الأوراق المُبطلة من `pending` إلى `revoked`.\n\n**آخر طلب في المجلّد**: تشغيله يبطل الروابط التي أصدرها الطلب الأول."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "console.log(\"revoked:\", b.revoked, \"| kept (submitted):\", b.kept);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8 · الأمان — Security",
+      "description": "ضابطان مستقلّان: `EDU_API_KEY` لمن يبني، و `EDU_PIPELINE_PAGE_SECRET` لمن يقرأ الصفحة.\n\nالطلبان أدناه يوضّحان الرفض. نتيجتهما تتبع إعداد الخادم:\n401 عندما يكون الضابط مفعّلًا، ونجاح عندما لا يكون.",
+      "item": [
+        {
+          "name": "POST /api/pipeline/document — بلا مفتاح (يُتوقّع 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ]
+            },
+            "description": "بلا ترويسة `X-Api-Key`. يرفض الخادم كل `/api/*` بـ 401 حين يكون `EDU_API_KEY` مضبوطًا.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"cards\",\n  \"document_idx\": \"{{documentIdx}}\",\n  \"seed\": \"{{seed}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"blocked when a key is configured\", () => {",
+                  "  pm.expect([401, 201, 200]).to.include(pm.response.code);",
+                  "  if (pm.response.code === 401) pm.expect(pm.response.json().error.code).to.eql(\"unauthorized\");",
+                  "  else console.log(\"note: server has no EDU_API_KEY set — the build succeeded.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /t/{{docKey}} — بلا توقيع (يُتوقّع 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/t/{{docKey}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "t",
+                "{{docKey}}"
+              ]
+            },
+            "description": "الرابط بلا التوقيع `?t=…`. مفتاح الصفحة مشتقّ من `document_idx` ويمكن تخمينه،\nلذا تُرفض الصفحة غير الموقّعة بـ 401 حين يكون `EDU_PIPELINE_PAGE_SECRET` مضبوطًا.\n\nقارنها بطلب \"الصفحة الموقّعة\" في المجلّد 3 الذي يمرّ.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"unsigned link refused when signing is on\", () => {",
+                  "  pm.expect([401, 200]).to.include(pm.response.code);",
+                  "  if (pm.response.code === 401) pm.expect(pm.response.json().error.code).to.be.oneOf([\"invalid-link\", \"unauthorized\"]);",
+                  "  else console.log(\"note: server has no EDU_PIPELINE_PAGE_SECRET set — pages are open.\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "9 · المخزن — The store",
+      "description": "قاعدتان على خادم MongoDB واحد:\n\n- **قاعدة المولّد** (`ai`) — الأسئلة وأوراق العمل والملخّصات. **قراءة فقط**، لا يكتب فيها شيء.\n- **قاعدة المنصّة** (`activities`) — كل مستند وُلّد ومفتاح إجابته، وكل رابط صدر وحالته،\n  وكل إجابة وتحليل عاد. **قراءة وكتابة**.\n\nالفصل بينهما هو ما يسمح لمستخدم واحد في MongoDB أن يملك `read` على الأولى\nو `readWrite` على الثانية، فلا يستطيع خطأ في هذا الكود أن يفسد مخرجات المولّد.\n\n**لا يُحفظ هنا أي سجل للمدارس أو المعلمين أو الفصول أو الطلاب.** هذه تخصّ المنصّة\nالتي تنادي هذه الخدمة: تصل كمعاملات في الطلب، وتُحفظ كلقطة (snapshot) على ما نُصدره —\nفورقةٌ صدرت الفصل الماضي تحتفظ بالاسم الذي طُبع عليها مهما تغيّر السجل بعد ذلك.\n\nTwo databases on one MongoDB server; nothing here is the authority on who anyone is.\nCollections, indexes and the Mongo user this needs: `docs/DATABASE.md`.",
+      "item": [
+        {
+          "name": "GET /api/pipeline/store — ما بداخل المخزن",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/store",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "store"
+              ]
+            },
+            "description": "عدد المستندات في كل مجموعة، ومعه فحص صلاحيات حيّ: هل يستطيع هذا الاتصال\nأن يقرأ، وأن **يكتب**؟\n\nالمستخدم الذي يملك `read` بدل `readWrite` يتصل بنجاح ويقدّم الصفحات،\nثم يرفض كل تسليم. لذلك يُجرَّب هنا كتابةٌ حقيقية بدل الاكتفاء بالاتصال."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"the store is reachable\", () => pm.expect(b.ok).to.eql(true));",
+                  "pm.test(\"and writable — not read-only by mistake\", () => {",
+                  "  pm.expect(b.access.canRead, \"can read\").to.eql(true);",
+                  "  pm.expect(b.access.canWrite, \"can write — see docs/DATABASE.md for the role to grant\").to.eql(true);",
+                  "});",
+                  "console.log(b.database, \"|\", b.documents, \"documents |\", JSON.stringify(b.collections));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/documents — ما وُلّد حتى الآن",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/documents?document_idx={{documentIdx}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "documents"
+              ],
+              "query": [
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                }
+              ]
+            },
+            "description": "سجلّ كل مستند بُني: نوعه وبذرته وعدد أسئلته وكم مرّة قُدّم.\n\nيبقى بعد خروج الصفحة من التخزين المؤقت — فالسؤال «أي اختبار أعطينا الصف\nفي أكتوبر» يجب أن ينجو من كنس الكاش."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().documents;",
+                  "pm.test(\"the list carries no answer key\", () => {",
+                  "  rows.forEach(r => pm.expect(r.questions, \"questions must not be in a list response\").to.be.undefined);",
+                  "});",
+                  "console.log(rows.map(r => r.type + \" · \" + r.id + \" · served \" + r.serve_count + \"×\").join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/documents/:key/questions — الاختبار كما طُبع",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/documents/{{docKey}}/questions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "documents",
+                "{{docKey}}",
+                "questions"
+              ]
+            },
+            "description": "الأسئلة التي سُحبت فعلًا لهذه الصفحة، بترتيبها ومفتاح إجابتها.\n\nيبقى صحيحًا حتى لو أُعيد توليد الدرس أو عُدّل بعدها — فهذه هي الورقة\nالتي أمسكها الطالب."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test(\"the questions were recorded with their key\", () => {",
+                  "  pm.expect(b.questions).to.be.an(\"array\").that.is.not.empty;",
+                  "  pm.expect(b.questions[0]).to.have.property(\"question_id\");",
+                  "});",
+                  "console.log(b.questions.length, \"questions ·\", b.document.type, \"· seed\", b.document.seed);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/links — لوحة الروابط",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/links?group_id={{groupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "links"
+              ],
+              "query": [
+                {
+                  "key": "group_id",
+                  "value": "{{groupId}}"
+                }
+              ]
+            },
+            "description": "كل رابط صدر وحالته: أُصدر، فُتح، سُلّم، أُلغي، أو انتهت صلاحيته —\nمع درجة الطالب حين يكون قد سلّم.\n\nبلا مفتاح إجابة وبلا رمز الرابط: هذه لوحة يقرأها إنسان، لا نسخة من السجل."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().links;",
+                  "pm.test(\"neither the token nor the key leaks into the board\", () => {",
+                  "  rows.forEach(r => {",
+                  "    pm.expect(r.token, \"token\").to.be.undefined;",
+                  "    pm.expect(r.answer_key, \"answer_key\").to.be.undefined;",
+                  "  });",
+                  "});",
+                  "console.log(rows.map(r => (r.student_name || r.student_id) + \" · \" + r.effective_status +",
+                  "  (r.percentage == null ? \"\" : \" · \" + r.percentage + \"%\")).join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/students/:id/results — سجلّ الطالب",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/students/{{studentId}}/results",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "students",
+                "{{studentId}}",
+                "results"
+              ]
+            },
+            "description": "كل ورقة جلس لها هذا الطالب: الدرجة والإتقان وتاريخ التسليم.\n\nالمعرّف هنا هو معرّف **منصّة الشريك** — لا يوجد سجل طلاب في هذه القاعدة،\nوإنما نتائج مُودعة تحت المعرّف الذي أرسلته المنصّة عند الإصدار."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "if (!b.results.length) console.log(\"note:\", b.note || \"no results under this id yet\");",
+                  "else console.log(b.results.map(r => r.lesson_title + \" · \" + r.overall.percentage + \"%\").join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/analytics/questions — أصعب الأسئلة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/analytics/questions?document_idx={{documentIdx}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "analytics",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                }
+              ]
+            },
+            "description": "تحليل المفردات: أي سؤال أخطأ فيه الطلاب، عبر كل التسليمات لا ورقة واحدة.\nالأصعب أولًا."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().questions;",
+                  "console.log(rows.slice(0, 10).map(r => r.question_id + \" · \" + r.correct_pct + \"% · \" +",
+                  "  r.correct + \"/\" + r.answered_by).join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/analytics/goals — ما يحتاج إعادة تدريس",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/analytics/goals?group_id={{groupId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "analytics",
+                "goals"
+              ],
+              "query": [
+                {
+                  "key": "group_id",
+                  "value": "{{groupId}}"
+                }
+              ]
+            },
+            "description": "متوسط إتقان كل هدف في المجموعة، وعدد الطلاب المتعثّرين فيه — الأضعف أولًا.\n\nهذا هو الصف الذي يتصرّف المعلم بناءً عليه."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().goals;",
+                  "console.log(rows.map(r => r.avg_percentage + \"% · \" + r.struggling + \" struggling · \" +",
+                  "  r.goal_text).join(\"\\n\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/pipeline/schools — (يُتوقّع 404) لا سجل للمدارس هنا",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/schools",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "schools"
+              ]
+            },
+            "description": "متعمَّد. المدارس والمعلمون والفصول والطلاب ليست ملكًا لهذه الخدمة:\nتصل كمعاملات في الطلب وتُحفظ كلقطة على ما نُصدره.\n\nلو كان هنا سجلّ طلاب لوجب مزامنته، ولكان اسم الطالب على ورقةٍ قديمة\nيتغيّر كلما تغيّر السجل — وهو ما لا يجوز أن يحدث."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"404 — the roster is not this service's to keep\", () => {",
+                  "  pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

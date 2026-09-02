@@ -1,0 +1,264 @@
+###############################################################################
+# Groups — issue a class, collect its answers, read its dashboard
+# -----------------------------------------------------------------------------
+# Runnable top to bottom in VS Code REST Client / JetBrains HTTP Client, or read
+# as a transcript: every request is followed by the response it actually
+# returned, trimmed to what matters.
+#
+#   1  issue a whole class under one group_id
+#   2  a student answers  (the sheet, then the submission)
+#   3  the dashboard      — the class, as a page and as JSON
+#   4  the answers        — everything the class actually sent
+#   5  the inventory      — which groups exist
+#   6  closing the group
+#
+# Full reference: docs/PIPELINE-API.md#groups-one-id-one-class-one-dashboard
+###############################################################################
+
+@baseUrl = http://localhost:8138
+@apiKey  = replace-me
+@group   = lesson-43617-oct
+@lesson  = 43617
+
+
+### 1 · Issue the whole class in one call ─────────────────────────────────────
+# One link per student, all filed under one group_id. The id is yours to choose
+# — a lesson id, a class code, an exam session. Nothing registers it first.
+
+POST {{baseUrl}}/api/pipeline/assign
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+  "type": "worksheet",
+  "document_idx": "{{lesson}}",
+  "seed": 7,
+  "group_id": "{{group}}",
+  "group_name": "الخامس/ب — أنواع الجملة",
+  "students": [
+    { "id": "STU-1042", "name": "أحمد بن سالم",  "classroom": "الخامس/ب" },
+    { "id": "STU-1043", "name": "سارة الحارثي",  "classroom": "الخامس/ب" },
+    { "id": "STU-1044", "name": "خالد العامري",  "classroom": "الخامس/ب" },
+    { "id": "STU-1045", "name": "نورة الشمري",   "classroom": "الخامس/ب" },
+    { "id": "STU-1046", "name": "ريم القحطاني",  "classroom": "الخامس/ب" },
+    { "id": "STU-1047", "name": "فهد المطيري",   "classroom": "الخامس/ب" }
+  ]
+}
+
+# 201 Created
+# {
+#   "ok": true,
+#   "group": { "id": "lesson-43617-oct", "name": "الخامس/ب — أنواع الجملة" },
+#   "issued": 6,
+#   "assignments": [
+#     { "assignment_id": "xQbAI4ThL5UjHj89KsffVQ",
+#       "status": "issued",
+#       "student": { "id": "STU-1045", "name": "نورة الشمري", "classroom": "الخامس/ب", "section": "" },
+#       "group_id": "lesson-43617-oct",
+#       "question_count": 6, "goal_count": 5,
+#       "answer_url": "http://localhost:8138/a/xQbAI4ThL5UjHj89KsffVQ?t=NNA0GXl0…",
+#       "report_url": "http://localhost:8138/api/pipeline/report/xQbAI4ThL5UjHj89KsffVQ?t=NNA0GXl0…",
+#       "page_url":   "http://localhost:8138/t/worksheet-43617-7-8688f5edfe" }
+#   ],
+#   "dashboard_url": "http://localhost:8138/api/pipeline/group/lesson-43617-oct/dashboard",
+#   "answers_url":   "http://localhost:8138/api/pipeline/group/lesson-43617-oct/answers"
+# }
+#
+# A roster row that names nobody is reported, not fatal:
+#   "skipped": [ { "index": 12, "reason": "no student id or name", "entry": {} } ]
+# Up to 200 students per call; a bigger class is several calls with the same id.
+
+
+### 1b · Or one student at a time — same group ────────────────────────────────
+# /document with a student_id does the same thing and also returns the
+# printable teacher copy. Thirty of these with one group_id is one group.
+
+POST {{baseUrl}}/api/pipeline/document
+Content-Type: application/json
+X-Api-Key: {{apiKey}}
+
+{
+  "type": "worksheet",
+  "document_idx": "{{lesson}}",
+  "seed": 7,
+  "group_id": "{{group}}",
+  "group_name": "الخامس/ب — أنواع الجملة",
+  "student": { "id": "STU-1048", "name": "لمى الدوسري", "classroom": "الخامس/ب" }
+}
+
+# 201 Created — the usual document response, plus:
+# { "url": "http://localhost:8138/t/worksheet-43617-7-8688f5edfe",   ← teacher's copy
+#   "assignment": { "assignment_id": "…", "group_id": "lesson-43617-oct",
+#                   "answer_url": "http://localhost:8138/a/…?t=…",
+#                   "group_dashboard_url": "http://localhost:8138/api/pipeline/group/lesson-43617-oct/dashboard" } }
+#
+# The group is NOT part of the cache key: two classes answering the same lesson
+# still share one cached render.
+
+
+### 2 · The student's sheet ───────────────────────────────────────────────────
+# No API key — the id and its token are the credential. Opening is recorded and
+# does not spend the link; submitting does.
+
+GET {{baseUrl}}/a/xQbAI4ThL5UjHj89KsffVQ?t=NNA0GXl0UlIw5CwJpEyUI2pYEbsMmsjE
+
+# 200 OK · text/html — the answerable sheet. The model answers are NOT in it.
+# Question ids are on the page as data-qid="…".
+
+
+### 2b · The student submits ──────────────────────────────────────────────────
+
+POST {{baseUrl}}/api/pipeline/submit
+Content-Type: application/json
+
+{
+  "assignment_id": "xQbAI4ThL5UjHj89KsffVQ",
+  "token": "NNA0GXl0UlIw5CwJpEyUI2pYEbsMmsjE",
+  "answers": {
+    "mc_1": "الشمسُ ساطعة",
+    "tf_1": "خطأ",
+    "cp_1": "الجوّ",
+    "mc_2": "نور",
+    "sa_1": "كتب فعل ماض مبني على الفتح والطالب فاعل مرفوع والدرس مفعول به منصوب",
+    "cp_2": "يقرأ"
+  }
+}
+
+# 201 Created — the full per-student analysis. The link is now dead (410).
+# { "overall": { "correct": 6, "total": 6, "percentage": 100, "mastery_label": "متقن" },
+#   "goals": { "goal_1": { "percentage": 100, "correct": 2, "total": 2, "recommendation": "…" } },
+#   "report": { "headline": "نورة الشمري: 6 إجابة صحيحة من 6 — 100% (متقن)." },
+#   "report_url": "…", "result_url": "…" }
+#
+# Repeat for the rest of the class. Two students never answering is fine — the
+# dashboard below keeps them in the picture rather than averaging around them.
+
+
+### 3 · The dashboard — the whole class as a page ─────────────────────────────
+# Open in a browser. Participation → class average → goals weakest-first →
+# questions hardest-first → every student, each row linking to their own sheet.
+
+GET {{baseUrl}}/api/pipeline/group/{{group}}/dashboard
+X-Api-Key: {{apiKey}}
+
+# 200 OK · text/html, standalone and printable.
+
+
+### 3b · The same analysis as JSON ────────────────────────────────────────────
+
+GET {{baseUrl}}/api/pipeline/group/{{group}}
+X-Api-Key: {{apiKey}}
+
+# 200 OK
+# {
+#   "schema": "pipeline.group-analysis/1",
+#   "group": { "id": "lesson-43617-oct", "name": "الخامس/ب — أنواع الجملة" },
+#   "participation": { "issued": 6, "submitted": 4, "pending": 2, "submission_rate": 66.7 },
+#   "overall": { "answered_students": 4, "average_percentage": 66.7, "median_percentage": 83.3,
+#                "highest_percentage": 100, "lowest_percentage": 0,
+#                "mastery_label": "مقبول" },
+#   "distribution": [ { "label": "متقن", "count": 2, "percentage": 50 }, … ],
+#
+#   "goals": [                                     ← weakest first: the reteaching list
+#     { "goal_id": "goal_3", "goal_text": "يعرب الجملة الفعلية إعراباً تاماً",
+#       "tested_students": 4, "mastered": 2, "struggling": 2,
+#       "average_percentage": 50, "class_percentage": 50,
+#       "students_needing_work": [ { "student_name": "سارة الحارثي", "percentage": 0 },
+#                                  { "student_name": "خالد العامري", "percentage": 0 } ],
+#       "recommendation": "«يعرب الجملة الفعلية إعراباً تاماً»: لم يتحقق للمجموعة (50%) — طالبان تحت 60%. أعد شرحه للصف كاملاً…" }
+#   ],
+#
+#   "questions": [                                 ← hardest first
+#     { "question": "خبر الجملة «العلمُ نورٌ» هو:", "correct_answer": "نور",
+#       "asked": 4, "correct": 2, "success_rate": 50,
+#       "common_wrong_answers": [ { "answer": "العلم", "count": 2 } ] }
+#   ],
+#
+#   "students": [                                  ← the summary, each row a way back
+#     { "student": { "id": "STU-1045", "name": "نورة الشمري" },
+#       "answered": true, "percentage": 100, "correct": 6, "total": 6,
+#       "mastery_label": "متقن", "weakest_goals": [],
+#       "report_url": "http://localhost:8138/api/pipeline/report/xQbAI4Th…?t=…",
+#       "result_url": "http://localhost:8138/api/pipeline/result/xQbAI4Th…?t=…" },
+#     { "student": { "id": "STU-1046", "name": "ريم القحطاني" },
+#       "answered": false, "percentage": null, "mastery_label": "لم يُسلَّم",
+#       "headline": "لم يسلّم بعد — رابطه ما زال صالحاً.",
+#       "answer_url": "http://localhost:8138/a/9ROeuFiu…?t=…" }
+#   ],
+#
+#   "report": {
+#     "headline": "«الخامس/ب — أنواع الجملة»: سلّم 4 من 6 — متوسط المجموعة 66.7% (مقبول).",
+#     "next_steps": [ "«يعرب الجملة الفعلية…»: أعد شرحه للصف كاملاً…",
+#                     "تابع خالد العامري فردياً (0%): …" ]
+#   }
+# }
+
+
+### 4 · Everything the class answered ─────────────────────────────────────────
+# Raw first — {question_id: answer} exactly as sent — with the graded reading
+# beside it, and who has not answered yet.
+
+GET {{baseUrl}}/api/pipeline/group/{{group}}/answers
+X-Api-Key: {{apiKey}}
+
+# 200 OK
+# {
+#   "schema": "pipeline.group-answers/1",
+#   "issued": 6, "submitted": 4,
+#   "pending": [ { "student": { "name": "ريم القحطاني" }, "answer_url": "…" } ],
+#   "submissions": [
+#     { "assignment_id": "xQbAI4ThL5UjHj89KsffVQ",
+#       "student": { "id": "STU-1045", "name": "نورة الشمري" },
+#       "submitted_at": "2026-08-22T04:07:36.198Z",
+#       "overall": { "correct": 6, "total": 6, "percentage": 100 },
+#       "answers": { "mc_1": "الشمسُ ساطعة", "tf_1": "خطأ", "cp_1": "الجوّ", "mc_2": "نور", … },
+#       "questions": [
+#         { "question_id": "mc_1", "question": "أي مما يلي جملة اسمية؟",
+#           "goal_id": "goal_1", "goal_text": "يميّز بين الجملة الاسمية والفعلية",
+#           "student_answer": "الشمسُ ساطعة", "correct_answer": "الشمسُ ساطعة",
+#           "answered": true, "correct": true, "score": 1, "needs_review": false }
+#       ],
+#       "report_url": "…", "result_url": "…" }
+#   ]
+# }
+
+
+### 4b · One student's answers out of the group ───────────────────────────────
+
+GET {{baseUrl}}/api/pipeline/group/{{group}}/answers?student_id=STU-1044
+X-Api-Key: {{apiKey}}
+
+
+### 4c · The raw records, not the analysis ────────────────────────────────────
+
+GET {{baseUrl}}/api/pipeline/assignments?group_id={{group}}&status=issued
+X-Api-Key: {{apiKey}}
+
+# 200 OK — { "count": 2, "assignments": [ { "status": "issued", "student": {…},
+#            "group_id": "lesson-43617-oct", "answer_url": "…" } ] }
+
+
+### 5 · Which groups exist ────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api/pipeline/groups
+X-Api-Key: {{apiKey}}
+
+# 200 OK
+# { "count": 1,
+#   "groups": [ { "group_id": "lesson-43617-oct",
+#                 "group_name": "الخامس/ب — أنواع الجملة",
+#                 "lessons": ["43617"], "students": 6,
+#                 "issued": 6, "submitted": 4, "pending": 2, "submission_rate": 66.7,
+#                 "dashboard_url": "…", "answers_url": "…" } ] }
+
+
+### 6 · Close the group ───────────────────────────────────────────────────────
+# Revokes every link still outstanding. Submitted work is untouched — its
+# results stay readable and the dashboard keeps reporting them.
+
+DELETE {{baseUrl}}/api/pipeline/group/{{group}}?reason=انتهى وقت الاختبار
+X-Api-Key: {{apiKey}}
+
+# 200 OK
+# { "ok": true, "group_id": "lesson-43617-oct", "revoked": 2, "kept": 4,
+#   "note": "Submitted sheets are untouched — their results stay readable, and the dashboard still reports them." }

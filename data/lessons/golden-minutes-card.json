@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "template": "golden-minutes",
+    "age": "playful",
+    "color": "teal",
+    "title": "بطاقة الدقائق الذهبية للحصة",
+    "pageTitle": "بطاقة الدقائق الذهبية للحصة",
+    "org": { "title": "", "subtitle": "" },
+    "art": "🌿",
+    "titleDeco": "🌿",
+    "footer": "🤍"
+  },
+
+  "session": {
+    "number": 1, "title": "بيانات الحصة", "color": "teal",
+    "rows": [
+      { "icon": "school",   "label": "اسم المدرسة",   "value": "" },
+      { "icon": "calendar", "label": "اليوم والتاريخ", "value": "" },
+      { "icon": "book",     "label": "المادة والصف",   "value": "" },
+      { "icon": "clock",    "label": "مدة الحصة",      "value": "" },
+      { "icon": "target",   "label": "عنوان الدرس",    "value": "" },
+      { "icon": "bulb",     "label": "ناتج التعلم الأساسي", "value": "" },
+      { "icon": "brain",    "label": "المعرفة السابقة المطلوبة", "value": "", "wide": true },
+      { "icon": "question", "label": "سؤال بداية الحصة", "value": "", "wide": true }
+    ]
+  },
+
+  "firstFive": {
+    "number": 2, "title": "أول خمس دقائق", "color": "teal",
+    "items": [
+      { "icon": "clipboard", "label": "الدقيقة الأولى",  "text": "الاستعداد" },
+      { "icon": "question",  "label": "الدقيقة الثانية", "text": "سؤال محفز" },
+      { "icon": "brain",     "label": "الدقيقة الثالثة", "text": "استدعاء المعرفة السابقة" },
+      { "icon": "star",      "label": "الدقيقة الرابعة", "text": "ناتج التعلم",
+        "sub": "في نهاية الحصة سأستطيع أن..." },
+      { "icon": "rocket",    "label": "الدقيقة الخامسة", "text": "مهمة الانطلاق" }
+    ]
+  },
+
+  "readiness": {
+    "number": 3, "title": "مؤشر جاهزية الطلاب", "color": "green", "deco": "🤍🌿",
+    "items": [
+      { "icon": "check",   "text": "جاهزون لبدء الدرس" },
+      { "icon": "refresh", "text": "يحتاجون إلى مراجعة سريعة" },
+      { "icon": "level",   "text": "تفاوت واضح في المعرفة السابقة" },
+      { "icon": "pencil",  "text": "البيانات غير كافية" }
+    ]
+  },
+
+  "lastFive": {
+    "number": 4, "title": "آخر خمس دقائق", "color": "green",
+    "items": [
+      { "icon": "bulb",   "text": "تلخيص الفكرة الرئيسة" },
+      { "icon": "search", "text": "سؤال تحقق" },
+      { "icon": "timer",  "text": "تطبيق سريع" },
+      { "icon": "pencil", "text": "بطاقة خروج (ثلاثة أسئلة)" },
+      { "icon": "next",   "text": "الخطوة القادمة" }
+    ]
+  },
+
+  "decision": {
+    "number": 5, "title": "قرار المعلم بعد الحصة", "color": "green",
+    "items": [
+      { "icon": "target",  "text": "متابعة الخطة كما هي" },
+      { "icon": "refresh", "text": "إعادة التدريس بأسلوب مختلف" },
+      { "icon": "users",   "text": "تقديم دعم إضافي لبعض الطلاب" },
+      { "icon": "star",    "text": "توسيع التعلم للطلاب المتقنين" }
+    ]
+  },
+
+  "note": {
+    "number": 6, "title": "ملاحظة سريعة", "color": "teal",
+    "text": "", "lines": 3, "deco": "🌿"
+  },
+
+  "teacher": {
+    "number": 7, "title": "اسم المعلم", "color": "teal", "icon": "user",
+    "name": "",
+    "fields": [
+      { "label": "التوقيع", "value": "" },
+      { "label": "التاريخ", "value": "" }
+    ]
+  },
+
+  "visitor": {
+    "title": "ملاحظة الزائر  (عند وجود زيارة)", "icon": "clipboard",
+    "text": "", "lines": 2, "color": "teal"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "meta": {
+    "badge": "ورقة عمل",
+    "title": "عنوان الدرس هنا",
+    "pageTitle": "ورقة عمل — عنوان الدرس",
+    "theme": "playful",
+    "accent": "#33608d",
+    "decor": {
+      "right": ["🪴"],
+      "left": ["🌳", "🐇"]
+    }
+  },
+  "studentBar": [
+    { "icon": "👤", "label": "اسم الطالب / الطالبة" },
+    { "icon": "🎓", "label": "الصف" },
+    { "icon": "📅", "label": "التاريخ" }
+  ],
+  "info": {
+    "color": "yellow",
+    "rows": [
+      { "icon": "🧪", "label": "المادة", "value": "المادة هنا" },
+      { "icon": "🧑‍🎓", "label": "الصف", "value": "الصف هنا" },
+      { "icon": "📅", "label": "الفصل الدراسي", "value": "الأول" },
+      { "icon": "📖", "label": "الوحدة", "value": "اسم الوحدة" },
+      { "icon": "🎯", "label": "عنوان الدرس", "value": "عنوان الدرس" }
+    ]
+  },
+  "warmup": {
+    "title": "تهيئة",
+    "titleIcon": "💡",
+    "color": "orange",
+    "text": "سؤال التهيئة أو النص التمهيدي هنا...",
+    "mascot": "💧"
+  },
+  "objectives": {
+    "title": "أهداف التعلم",
+    "titleIcon": "🎯",
+    "color": "green",
+    "image": "🌱",
+    "items": [
+      "الهدف الأول.",
+      "الهدف الثاني.",
+      "الهدف الثالث."
+    ]
+  },
+  "sections": [
+    {
+      "type": "choose",
+      "number": 1,
+      "color": "blue",
+      "title": "أختر الإجابة الصحيحة",
+      "instruction": "تعليمات النشاط هنا.",
+      "rows": [
+        {
+          "subject": { "image": "🦁", "label": "الموضوع" },
+          "options": [
+            { "image": "🪵", "label": "خيار 1" },
+            { "image": "🥩", "label": "خيار 2" },
+            { "image": "💧", "label": "خيار 3" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fill-blank",
+      "number": 2,
+      "color": "sky",
+      "title": "أكمل الفراغ",
+      "instruction": "أكمل الجمل بالكلمة المناسبة من الصندوق.",
+      "wordBank": ["كلمة 1", "كلمة 2", "كلمة 3"],
+      "items": [
+        { "icon": "💧", "text": "جملة تحتوي على فراغ ___ بهذا الشكل." },
+        { "icon": "🌱", "text": "جملة أخرى فيها ___ أيضاً." }
+      ]
+    },
+    {
+      "type": "matching",
+      "number": 3,
+      "color": "purple",
+      "title": "صل كل عنصر بما يناسبه",
+      "needs": [
+        { "label": "مفهوم 1" },
+        { "label": "مفهوم 2" }
+      ],
+      "creatures": [
+        { "image": "🌳", "label": "عنصر 1" },
+        { "image": "🐟", "label": "عنصر 2" }
+      ]
+    },
+    {
+      "type": "classify",
+      "number": 4,
+      "span": 2,
+      "color": "orange",
+      "title": "صنف ما يلي:",
+      "chips": ["كلمة أ", "كلمة ب", "كلمة ج", "كلمة د"],
+      "columns": [
+        { "title": "المجموعة الأولى", "subtitle": "(وصف)", "icon": "🫁", "color": "green", "lines": 3 },
+        { "title": "المجموعة الثانية", "subtitle": "(وصف)", "icon": "🪨", "color": "orange", "lines": 3 }
+      ]
+    },
+    {
+      "type": "drawing",
+      "number": 5,
+      "color": "teal",
+      "title": "نشاط تفكير ورسم:",
+      "instruction": "تعليمات الرسم هنا.",
+      "deco": "✏️",
+      "labels": ["التسمية الأولى", "التسمية الثانية"]
+    },
+    {
+      "type": "signatures",
+      "color": "blue",
+      "entries": [
+        { "icon": "🖋️", "role": "المعلم / المعلمة", "name": "" },
+        { "icon": "🖋️", "role": "مدير / مديرة المدرسة", "name": "" }
+      ]
+    },
+    {
+      "type": "self-assessment",
+      "color": "purple",
+      "title": "تقييم ذاتي",
+      "titleIcon": "⭐",
+      "prompt": "لوّن الوجه الذي يعبر عن فهمك للدرس:",
+      "options": [
+        { "icon": "😊", "label": "أفهم جيداً", "color": "green" },
+        { "icon": "😐", "label": "أفهم قليلاً", "color": "yellow" },
+        { "icon": "☹️", "label": "أحتاج لمساعدة", "color": "red" }
+      ]
+    },
+    {
+      "type": "homework",
+      "color": "pink",
+      "title": "واجب منزلي",
+      "titleIcon": "🏠",
+      "text": "نص الواجب المنزلي هنا.",
+      "lines": 4
+    }
+  ]
+}

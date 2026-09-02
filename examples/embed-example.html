@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مثال التضمين — Embed example</title>
+<style>
+  body{font-family:"Segoe UI",Tahoma,sans-serif; background:#eef2f7; color:#33415c; margin:0; padding:28px 18px 60px;}
+  .host{max-width:900px; margin:0 auto;}
+  h1{font-size:22px; margin-bottom:6px;}
+  p{font-size:14px; line-height:1.9; color:#5b6f8d; margin-bottom:18px;}
+  .frame-box{background:#fff; border:1px solid #dbe4ee; border-radius:14px; padding:14px; box-shadow:0 6px 20px #47617c1f;}
+  iframe{width:100%; border:0; display:block; border-radius:8px;}
+  code{background:#e6edf5; border-radius:5px; padding:1px 6px; font-size:13px; direction:ltr; display:inline-block;}
+  pre{direction:ltr; text-align:left; background:#22314a; color:#dbe7f5; padding:14px 16px; border-radius:10px; overflow-x:auto; font-size:12.5px; line-height:1.7;}
+  .status{font-size:13px; font-weight:700; color:#2c7a4b; margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="host">
+
+  <h1>تضمين ورقة العمل في موقع آخر</h1>
+  <p>
+    هذه صفحة خارجية (ليست جزءاً من محرك أوراق العمل) تعرض كيف تُضمَّن الورقة داخل أي موقع.
+    الإطار أدناه يكبر تلقائياً بحسب ارتفاع الورقة — بدون شريط تمرير داخلي.
+  </p>
+
+  <div class="frame-box">
+    <iframe data-edu-worksheet
+            src="../embed.html?lesson=science-g2-living-creatures-needs"
+            title="ورقة عمل — حاجات المخلوقات الحية"
+            loading="lazy"></iframe>
+  </div>
+  <div class="status" id="status">…جارٍ التحميل</div>
+
+  <h1 style="margin-top:34px">الكود</h1>
+  <pre>&lt;iframe data-edu-worksheet
+        src="https://YOUR-DOMAIN/embed.html?lesson=science-g2-living-creatures-needs"
+        style="width:100%;border:0" title="ورقة عمل"&gt;&lt;/iframe&gt;
+
+&lt;script src="https://YOUR-DOMAIN/assets/js/iframe-resizer.js"&gt;&lt;/script&gt;</pre>
+
+  <p>
+    خيارات الرابط: <code>?lesson=&lt;id&gt;</code> ·
+    <code>&amp;theme=pro</code> ·
+    <code>&amp;toolbar=1</code> (لإظهار أزرار الطباعة والنمط داخل الإطار).
+  </p>
+
+</div>
+
+<script src="../assets/js/iframe-resizer.js"></script>
+<script>
+  // Optional: react to the worksheet's own events.
+  document.addEventListener("edu:ready", e => {
+    document.getElementById("status").textContent =
+      "✓ تم تحميل الدرس: " + e.detail.lessonId + "  (المصدر: " + e.detail.from + ")";
+  });
+  document.addEventListener("edu:error", e => {
+    document.getElementById("status").style.color = "#c2596e";
+    document.getElementById("status").textContent = "✗ تعذّر التحميل: " + e.detail.code;
+  });
+</script>
+</body>
+</html>

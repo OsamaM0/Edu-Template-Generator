@@ -1,0 +1,340 @@
+/* ============================================================================
+   template-cards.css — the two interactive-review-card templates
+   ----------------------------------------------------------------------------
+   Layout order in this file:
+     1. shared sheet + masthead        (.ic-head …)
+     2. question template              (.ic-strip / .ic-grid / .ic-card)
+     3. answer template                (.ac-meta / .ac-grid / .ac-card)
+     4. shared footer
+     5. KID MODE overrides             ([data-theme="playful"] …)
+
+   The unscoped rules are the professional (pro / teen / adult) look. Kid mode
+   is a scoped override, so its higher specificity wins regardless of order.
+   Card color comes from --c/--tint (per card), sheet color from --accent.
+   ========================================================================== */
+
+/* ============ 1. SHEET + MASTHEAD (shared) ============ */
+
+.page[data-template^="interactive-card"]{
+  background:#fff;
+  border:1px solid #e3eaef;
+  border-radius:12px;
+  padding:11px 11px 9px;
+  /* A4 portrait at 96dpi = 794 × 1123. Making the sheet a flex column with
+     that min-height lets the card grid stretch to fill exactly one page. */
+  display:flex; flex-direction:column;
+  min-height:1123px;
+}
+[data-template^="interactive-card"] .ic-grid,
+[data-template^="interactive-card"] .ac-grid{flex:1; grid-auto-rows:1fr;}
+
+/* On phones the fixed A4 height would just be dead space. */
+@media screen and (max-width:820px){
+  .page[data-template^="interactive-card"]{min-height:0;}
+}
+
+[data-template^="interactive-card"] .ic-head{
+  display:flex; align-items:center; gap:10px;
+  border:1.5px solid #e3eaef;
+  border-radius:14px;
+  padding:9px 14px;
+  background:#fff;
+}
+.ic-head-side{flex:0 0 190px; min-width:0;}
+.ic-head-main{flex:1; text-align:center; min-width:0;}
+
+.ic-title{font-size:23px; font-weight:800; color:var(--accent); letter-spacing:1px; line-height:1.3;}
+.ic-sub{font-size:11.5px; font-weight:600; color:#6b7f92; margin-top:1px;}
+.ic-lesson{
+  display:inline-block; margin-top:6px;
+  background:var(--accent); color:#fff;
+  border-radius:9px; padding:2.5px 20px 4px;
+  font-size:12.5px; font-weight:800;
+}
+.ic-lesson .l{font-weight:600; opacity:.88;}
+
+/* right block of the question masthead: teacher / school rows */
+.ic-identity{display:flex; flex-direction:column; gap:4.5px;}
+.ic-id-row{display:flex; align-items:center; gap:5px; font-size:10.5px; line-height:1.4;}
+.ic-id-row .lbl{font-weight:800; color:#3c4f66; white-space:nowrap;}
+.ic-id-row .val{font-weight:600; color:#5b6f8d;}
+
+/* right block of the answer masthead: the solid subject tile */
+.ic-subject{
+  flex:0 0 auto;
+  display:flex; align-items:center; gap:8px;
+  background:var(--accent); color:#fff;
+  border-radius:11px; padding:7px 14px;
+}
+.ic-subject .tx{display:flex; flex-direction:column; line-height:1.42;}
+.ic-subject b{font-size:12.5px; font-weight:800;}
+.ic-subject i{font-style:normal; font-size:10.5px; opacity:.92;}
+
+/* logo slot — you supply the asset via meta.logo */
+.ic-logo{display:flex; align-items:center; justify-content:flex-end;}
+.ic-logo img{max-height:46px; max-width:160px; object-fit:contain;}
+.ic-logo.is-empty .ph{width:112px; height:40px; font-size:9.5px; font-weight:700;}
+
+/* inline SVG icons inherit the surrounding color */
+.ico{display:block; flex:0 0 auto;}
+.ic-id-ic, .ac-chip-ic, .ic-foot-ic{width:14px; height:14px; color:var(--accent);}
+.ic-subject-ic{width:23px; height:23px;}
+.ic-strip-ic{width:19px; height:19px;}
+
+/* ============ 2. QUESTION TEMPLATE ============ */
+
+/* --- objectives strip + card counter --- */
+.ic-strip{
+  display:flex; align-items:stretch;
+  margin-top:7px;
+  border:1.5px solid #e3eaef;
+  border-radius:13px;
+  overflow:hidden;
+  background:#fff;
+}
+.ic-strip-title{
+  flex:0 0 auto; min-width:76px;
+  background:var(--accent); color:#fff;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  padding:7px 13px;
+  font-size:11px; font-weight:800; text-align:center; line-height:1.35;
+}
+.ic-goals{flex:1; list-style:none; display:flex; justify-content:space-around; gap:7px; padding:8px 11px;}
+.ic-goals li{flex:1; display:flex; align-items:flex-start; gap:5px; font-size:10.2px; font-weight:600; line-height:1.55; color:#3f5268;}
+.ic-goals .n{
+  flex:0 0 auto; width:16px; height:16px; margin-top:1px;
+  border-radius:50%; background:var(--accent); color:#fff;
+  font-size:9.5px; font-weight:800;
+  display:grid; place-items:center;
+}
+.ic-counter{
+  flex:0 0 auto; min-width:88px;
+  background:var(--accent-tint);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:5px 14px;
+}
+.ic-counter .c-lbl{font-size:9.5px; font-weight:800; color:var(--accent);}
+.ic-counter .c-val{font-size:26px; font-weight:800; color:var(--accent); line-height:1.05;}
+.ic-counter .c-unit{font-size:9px; font-weight:600; color:var(--accent); opacity:.82;}
+.ic-counter .c-ic{width:16px; height:16px; color:var(--accent); margin-top:2px;}
+
+/* --- cut-out grid --- */
+.ic-grid{
+  display:grid;
+  grid-template-columns:repeat(var(--cols,2),1fr);
+  margin-top:8px;
+}
+/* Negative margin collapses neighbouring dashed borders into one cut line. */
+.ic-cut{position:relative; border:1.4px dashed #c3d2dc; padding:7px; margin:-0.7px;}
+.ic-scissors{
+  position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+  background:#fff; color:#9fb2c0;
+  font-size:11px; line-height:1; padding:0 4px;
+}
+
+/* --- one question card --- */
+.ic-card{
+  position:relative; height:100%;
+  background:#fff;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  /* top padding clears the number flag and the tag pill that sit on the edge */
+  padding:26px 11px 8px;
+  display:flex; flex-direction:column; gap:5px;
+  break-inside:avoid;
+}
+.ic-num{
+  position:absolute; top:0; right:14px;
+  width:31px; padding:3.5px 0 8px;
+  background:var(--c); color:#fff;
+  font-size:12.5px; font-weight:800; text-align:center; line-height:1;
+  clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);
+}
+.ic-tag{
+  position:absolute; top:9px; left:10px;
+  background:var(--tint); color:var(--c);
+  font-size:9.2px; font-weight:800;
+  border-radius:6px; padding:2px 9px 3px;
+}
+.ic-body{display:flex; align-items:center; gap:9px; flex:1;}
+.ic-q{flex:1; min-width:0;}
+.ic-qt{font-size:11.2px; font-weight:700; line-height:1.75; color:#33415c;}
+.ic-art{flex:0 0 auto; color:var(--c);}
+.ic-art .ico{width:46px; height:46px; stroke-width:1.35;}
+.ic-art .pic-emoji{font-size:34px;}
+.ic-art img.pic{height:44px; width:46px;}
+
+/* MCQ options: radios line up down the left edge, text reads from the right */
+.ic-opts{display:flex; flex-direction:column; gap:2.5px; margin-top:5px;}
+.ic-opt{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  cursor:pointer; font-size:10.4px; font-weight:600; color:#3f5268;
+  line-height:1.6;
+}
+.ic-opt .radio{
+  flex:0 0 auto; width:11.5px; height:11.5px;
+  border-radius:50%; border:1.5px solid #a8bccd; background:#fff;
+  display:grid; place-items:center; transition:.15s;
+}
+.ic-opt.sel .radio{border-color:var(--c);}
+.ic-opt.sel .radio::after{content:""; width:5.6px; height:5.6px; border-radius:50%; background:var(--c);}
+.ic-opt.sel .tx{color:var(--c); font-weight:800;}
+
+.ic-bullets{list-style:none; margin-top:4px; display:flex; flex-direction:column; gap:1.5px;}
+.ic-bullets li{position:relative; padding-right:11px; font-size:10.2px; font-weight:600; line-height:1.65; color:#3f5268;}
+.ic-bullets li::before{content:""; position:absolute; right:1px; top:6.5px; width:4.5px; height:4.5px; border-radius:50%; background:var(--c);}
+
+.ic-fill{text-align:center; font-size:11px; font-weight:700; margin-top:6px;}
+.ic-fill .blank{min-width:62px;}
+
+/* --- answer lines --- */
+.ic-ans{display:flex; align-items:flex-end; gap:6px; margin-top:auto; padding-top:3px;}
+.ic-ans-lbl{flex:0 0 auto; font-size:9.5px; font-weight:800; color:var(--c); padding-bottom:2px;}
+.ic-ans-lines{flex:1; display:flex; flex-direction:column; gap:3px; min-width:0;}
+.ic-ans-row{display:flex; align-items:center; gap:5px;}
+.ic-ans-row .wline{flex:1; min-height:14px; font-size:10.2px;}
+.ic-ans-n{flex:0 0 auto; font-size:9.5px; font-weight:800; color:var(--c);}
+
+/* ============ 3. ANSWER TEMPLATE ============ */
+
+/* Chips size to their own content so a long school name is never truncated. */
+.ac-meta{display:flex; flex-wrap:wrap; gap:6px; justify-content:space-between; margin-top:7px;}
+.ac-chip{
+  flex:0 1 auto; min-width:0;
+  display:flex; align-items:center; justify-content:center; gap:5px;
+  border:1.4px solid #e3eaef; border-radius:10px;
+  padding:5px 10px; font-size:9.8px; line-height:1.4;
+}
+.ac-chip .lbl{font-weight:800; color:#3c4f66; white-space:nowrap;}
+.ac-chip .val{font-weight:600; color:#5b6f8d; white-space:nowrap;}
+
+.ac-cut{position:relative; border-top:1.4px dashed #c3d2dc; margin:10px 0 9px;}
+.ac-cut .ic-scissors{left:auto; right:10px; transform:none; top:-8px;}
+
+.ac-grid{display:grid; grid-template-columns:repeat(var(--cols,2),1fr); gap:8px;}
+.ac-card{
+  position:relative;
+  background:#fff;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  padding:9px 10px 8px;
+  display:flex; flex-direction:column; gap:5px;
+  break-inside:avoid;
+}
+.ac-num{
+  position:absolute; top:7px; right:9px;
+  width:19px; height:19px; border-radius:50%;
+  background:var(--c); color:#fff;
+  font-size:10.5px; font-weight:800;
+  display:grid; place-items:center;
+}
+.ac-title{text-align:center; font-size:11.5px; font-weight:800; color:var(--c); line-height:1.4;}
+.ac-body{display:flex; align-items:center; gap:8px; flex:1;}
+.ac-text{flex:1; min-width:0; font-size:10px; font-weight:600; line-height:1.7; color:#3f5268;}
+.ac-text .lead{font-weight:800; color:#33415c; margin-bottom:2px;}
+.ac-art{
+  flex:0 0 auto;
+  width:46px; height:46px; border-radius:50%;
+  background:var(--tint); color:var(--c);
+  display:grid; place-items:center;
+}
+.ac-art .ico{width:26px; height:26px;}
+.ac-art .pic-emoji{font-size:24px;}
+.ac-art img.pic{height:26px; width:26px;}
+
+.ac-list{list-style:none; display:flex; flex-direction:column; gap:.5px;}
+.ac-list li{position:relative; padding-right:10px;}
+.ac-list li::before{content:""; position:absolute; right:1px; top:6.5px; width:4px; height:4px; border-radius:50%; background:var(--c);}
+ol.ac-list{counter-reset:acn;}
+ol.ac-list li{padding-right:15px;}
+ol.ac-list li::before{
+  content:counter(acn) "."; counter-increment:acn;
+  top:0; width:auto; height:auto; border-radius:0; background:none;
+  color:var(--c); font-weight:800; font-size:9.5px;
+}
+
+.ac-note{background:var(--tint); border-radius:8px; padding:5px 8px 6px;}
+.ac-note h4{font-size:9.8px; font-weight:800; color:var(--c); text-align:center; margin-bottom:2px;}
+.ac-note p{font-size:9.4px; font-weight:600; line-height:1.65; color:#4a5f78; text-align:center;}
+
+.ac-bar{display:flex; align-items:stretch; border-radius:7px; overflow:hidden; background:#eef2f6; font-size:9.2px;}
+.ac-bar .b-lbl{background:var(--c); color:#fff; font-weight:800; padding:3.5px 9px 4.5px;}
+.ac-bar .b-val{background:#dde5ec; color:#3f5268; font-weight:700; padding:3.5px 13px 4.5px;}
+.ac-bar .b-score{flex:1; text-align:left; color:#6a7f95; font-weight:600; padding:3.5px 9px 4.5px;}
+.ac-bar .b-score b{font-weight:800; color:#41556e;}
+
+/* ============ 4. FOOTER (shared) ============ */
+
+.ic-foot{
+  position:relative; overflow:hidden;
+  margin-top:8px; padding:6px 14px;
+  display:flex; align-items:center; justify-content:space-around; gap:12px;
+}
+.ic-foot-item{display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:800; color:var(--accent);}
+.ic-foot-dots{
+  position:absolute; inset-inline-start:0; bottom:-4px;
+  width:150px; height:32px; pointer-events:none; opacity:.25;
+  background-image:radial-gradient(circle, var(--accent) 1.4px, transparent 1.5px);
+  background-size:11px 11px;
+}
+
+/* ============ 5. KID MODE ============
+   Same information, softer shell: thicker rounded borders in the card color,
+   tinted heads, bigger art, pill-shaped chrome. */
+
+[data-theme="playful"][data-template^="interactive-card"]{
+  background:linear-gradient(180deg,#f4fbff,#fdfeff 220px,#fbfdff);
+  border:2px solid #dceefb;
+  border-radius:18px;
+}
+[data-theme="playful"] .ic-head{
+  border:2px solid var(--accent-tint);
+  border-radius:18px;
+  background:linear-gradient(180deg,var(--accent-tint),#fff 70%);
+}
+[data-theme="playful"] .ic-title{font-size:25px; letter-spacing:0;}
+[data-theme="playful"] .ic-lesson{border-radius:999px; border:2px solid #fff; box-shadow:0 2px 7px #0000001f;}
+[data-theme="playful"] .ic-subject{border-radius:16px;}
+[data-theme="playful"] .ic-strip{border:2px solid var(--accent-tint); border-radius:18px;}
+[data-theme="playful"] .ic-strip-title{border-radius:0 16px 16px 0;}
+[data-theme="playful"] .ic-counter{border-radius:16px 0 0 16px;}
+[data-theme="playful"] .ic-goals .n{box-shadow:0 1.5px 3px #0002;}
+
+[data-theme="playful"] .ic-cut{border-color:#cfe3f2;}
+[data-theme="playful"] .ic-card{
+  border:2px solid var(--c);
+  border-radius:16px;
+  box-shadow:0 3px 8px #7d9cb81f;
+}
+[data-theme="playful"] .ic-num{
+  top:7px; right:9px;
+  width:22px; height:22px; padding:0;
+  border-radius:50%;
+  display:grid; place-items:center;
+  clip-path:none;
+  font-size:11px;
+  box-shadow:0 1.5px 3px #0002;
+}
+[data-theme="playful"] .ic-tag{border-radius:999px; font-size:9.5px; padding:2px 11px 3px;}
+[data-theme="playful"] .ic-card{padding:34px 11px 8px;}
+[data-theme="playful"] .ic-qt{font-size:11.6px;}
+[data-theme="playful"] .ic-art .ico{width:50px; height:50px;}
+[data-theme="playful"] .ic-opt .radio{border-width:1.8px;}
+[data-theme="playful"] .ic-ans-row .wline{border-bottom-style:dotted;}
+
+[data-theme="playful"] .ac-chip{border:2px solid var(--accent-tint); border-radius:999px;}
+[data-theme="playful"] .ac-card{
+  border:2px solid var(--c);
+  border-radius:16px;
+  box-shadow:0 3px 8px #7d9cb81f;
+}
+[data-theme="playful"] .ac-title{
+  background:var(--tint); border-radius:999px; padding:2px 8px 3px;
+}
+[data-theme="playful"] .ac-note{border-radius:12px;}
+[data-theme="playful"] .ac-bar{border-radius:999px;}
+[data-theme="playful"] .ac-art{box-shadow:0 0 0 2px var(--c);}
+[data-theme="playful"] .ic-foot-item{
+  background:#fff; border:2px solid var(--accent-tint);
+  border-radius:999px; padding:2px 12px 3px;
+}

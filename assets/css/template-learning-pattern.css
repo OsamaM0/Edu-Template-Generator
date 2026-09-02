@@ -1,0 +1,333 @@
+/* ============================================================================
+   template-learning-pattern.css — استبيان تحديد أنماط التعلم
+   ----------------------------------------------------------------------------
+   Layout order:
+     1. sheet + masthead (art · organization lines + title · logo corner)
+     2. shared card chrome + numbered section bars
+     3. the student row
+     4. the aim + the point scale
+     5. the statements grid (statement · one tick cell per scale point)
+     6. presentation mode — one statement per slide
+     7. KID MODE overrides ([data-theme="playful"] …)
+
+   There is no result block. A learning-pattern sheet is a QUESTION sheet: it
+   collects ticks, and the scoring happens on the server when it is submitted
+   (server/pipeline/answers/profile.mjs).
+
+   Unscoped rules are the professional look (chrome colored by --accent via
+   tpal; per-block colors survive in --c/--tint per element). Kid mode is a
+   scoped override, so its higher specificity wins regardless of file order.
+
+   The grid is one CSS grid per row, all sharing `--n` (the number of scale
+   points) — so a sheet with a 3- or 5-point scale needs no new CSS.
+   ========================================================================== */
+
+/* ============ 1. SHEET + MASTHEAD ============ */
+
+.page[data-template="learning-pattern"]{
+  background:#fff;
+  border:1px solid #e3eaef;
+  border-radius:12px;
+  padding:10px 10px 9px;
+  display:flex; flex-direction:column; gap:7px;
+  min-height:1123px;                 /* one A4 portrait page at 96dpi */
+}
+@media screen and (max-width:820px){
+  .page[data-template="learning-pattern"]{min-height:0;}
+}
+
+[data-template="learning-pattern"] .lp-head{
+  display:flex; align-items:center; gap:10px;
+  padding:2px 6px 0;
+}
+.lp-head-side{flex:0 0 88px; min-width:0; display:flex; align-items:center; justify-content:center;}
+.lp-head-main{flex:1; min-width:0; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px;}
+
+.lp-org{display:flex; flex-direction:column; align-items:center; gap:1px; line-height:1.5;}
+.lp-org b{font-size:14.5px; font-weight:800; color:#2e3f52;}
+.lp-org i{font-style:normal; font-size:8.6px; font-weight:700; letter-spacing:.6px; color:#8a99ab;}
+
+.lp-title{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:18.5px; font-weight:800; color:var(--ink); line-height:1.4;
+}
+.lp-subtitle{font-size:10px; font-weight:700; color:#7c8ea1; line-height:1.5;}
+.lp-tdeco .pic-emoji{font-size:13px;}
+.lp-tdeco .ico{width:14px; height:14px; color:var(--accent);}
+
+/* corner art */
+.lp-art .lp-art-emoji{font-size:32px;}
+.lp-art img.pic{max-height:66px; max-width:88px;}
+.lp-art .ico{width:38px; height:38px; color:var(--accent);}
+
+/* school badge (top corner) */
+.lp-badge{
+  flex:0 0 auto; width:82px; min-height:80px;
+  background:#fff;
+  border:1.6px solid var(--accent);
+  border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  padding:7px 6px; text-align:center;
+  font-size:9px; font-weight:800; color:var(--accent); line-height:1.5;
+}
+.lp-badge-ic.ico{width:28px; height:28px; color:var(--accent);}
+.lp-badge .pic-emoji{font-size:21px;}
+
+/* the badge box carrying the school logo instead of icon + text */
+.lp-badge-logo{border:none; box-shadow:none; background:none; padding:0; min-height:0;}
+img.lp-badge-pic{max-width:82px; max-height:82px;}
+.lp-badge-logo .pic-emoji{font-size:44px;}
+.lp-badge-logo .ico{width:50px; height:50px; color:var(--accent);}
+
+/* ============ 2. CARD CHROME + SECTION BARS ============ */
+
+.lp-card{
+  background:#fff;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  padding:7px 8px 8px;
+  break-inside:avoid;
+  min-width:0;
+}
+
+.lp-bar{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:linear-gradient(90deg,var(--c),var(--c2,var(--c)));
+  color:#fff;
+  border-radius:9px;
+  padding:4px 11px 5px;
+  font-size:11px; font-weight:800; line-height:1.4;
+  margin-bottom:6px;
+}
+.lp-bar-num{
+  flex:0 0 auto; width:19px; height:19px; border-radius:50%;
+  background:#fff; color:var(--c);
+  font-size:10.4px; font-weight:800;
+  display:grid; place-items:center;
+}
+/* the aim bar is a right-anchored tab, like the section bars of the card sheets */
+.lp-intro > .lp-bar{width:fit-content; min-width:200px; margin-inline-end:auto;}
+
+/* writable dotted fills */
+.lp-fill{min-height:14px; width:100%;}
+
+/* ============ 3. STUDENT ROW ============ */
+
+.lp-meta{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:6px 8px;
+  background:#fbfdfe;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  padding:7px 9px;
+}
+.lp-mf{display:flex; align-items:stretch; gap:6px; min-width:0;}
+.lp-mf-lab{
+  flex:0 0 auto;
+  display:flex; align-items:center; gap:5px;
+  font-size:9.8px; font-weight:800; color:#33475c; line-height:1.4; white-space:nowrap;
+}
+.lp-mf-ic.ico{width:14px; height:14px; color:var(--c);}
+.lp-mf-lab .pic-emoji{font-size:12px;}
+.lp-mf-val{
+  flex:1; min-width:0; min-height:22px;
+  border-bottom:1.6px dotted #b9c8d6;
+  display:flex; align-items:flex-end;
+  font-size:10px; font-weight:800; color:var(--ink); line-height:1.5;
+}
+
+/* ============ 4. AIM + POINT SCALE ============ */
+
+.lp-intro-bd{display:flex; flex-direction:column; gap:6px;}
+.lp-intro-tx{font-size:9.6px; font-weight:600; line-height:1.75; color:#3f5268; text-align:justify;}
+
+.lp-scale{
+  display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  background:var(--tint);
+  border-radius:9px;
+  padding:5px 9px;
+}
+.lp-scale-lab{font-size:9.4px; font-weight:800; color:var(--c); line-height:1.5;}
+.lp-chips{display:flex; align-items:center; gap:6px; flex-wrap:wrap; flex:1;}
+.lp-chip{
+  display:inline-flex; align-items:center; gap:5px;
+  background:#fff;
+  border:1.3px solid var(--c);
+  border-radius:999px;
+  padding:2px 5px 2.5px 9px;
+  font-size:9.4px; font-weight:800; color:#33475c; line-height:1.5;
+}
+.lp-chip i{
+  font-style:normal;
+  width:15px; height:15px; border-radius:50%;
+  background:var(--c); color:#fff;
+  font-size:9px; font-weight:800;
+  display:grid; place-items:center;
+}
+
+/* ============ 5. THE STATEMENTS GRID ============ */
+
+.lp-quiz{flex:1; display:flex; flex-direction:column;}   /* absorbs spare height */
+.lp-grid{flex:1; display:flex; flex-direction:column;}
+/* The sheet is a fixed A4 page and the statements are what varies, so the spare
+   height is spread across the rows rather than left as a gap under the last
+   one — 16 statements fill the card, 10 fill it just as evenly. */
+.lp-grid > .lp-row{flex:1 1 auto;}
+.lp-grid > .lp-head-row{flex:0 0 auto;}
+
+/* One grid per row, all sharing --n, so the columns line up down the sheet and
+   a 3- or 5-point scale needs no new rule. */
+.lp-row{
+  display:grid;
+  grid-template-columns:1fr repeat(var(--n,4),58px);
+  align-items:center;
+  gap:0 4px;
+  min-height:25px;
+  border-bottom:1px solid #eef3f7;
+}
+.lp-row:last-child{border-bottom:none;}
+
+.lp-head-row{
+  min-height:27px;
+  background:var(--tint);
+  border-radius:8px;
+  border-bottom:none;
+  margin-bottom:2px;
+  padding:0 2px;
+}
+.lp-head-row .lp-q{font-size:10px; font-weight:800; color:var(--c); padding-inline-start:8px;}
+.lp-opt-h{
+  text-align:center;
+  font-size:9px; font-weight:800; color:var(--c); line-height:1.35;
+}
+
+.lp-q{
+  display:flex; align-items:center; gap:7px; min-width:0;
+  font-size:9.6px; font-weight:700; color:#33475c; line-height:1.5;
+  padding:2px 2px 2px 4px;
+}
+.lp-q-num{
+  flex:0 0 auto;
+  font-style:normal;
+  width:16px; height:16px; border-radius:50%;
+  background:var(--tint); color:var(--c);
+  font-size:8.8px; font-weight:800;
+  display:grid; place-items:center;
+}
+.lp-q-tx{min-width:0;}
+
+/* the tick cell */
+.lp-opt{
+  justify-self:center;
+  width:16px; height:16px; border-radius:50%;
+  background:#fff;
+  border:1.7px solid #b8c9d6;
+  padding:0; cursor:pointer; font:inherit;
+  display:grid; place-items:center;
+  transition:background .12s, border-color .12s;
+}
+.lp-opt:hover{border-color:var(--c);}
+.lp-opt:focus-visible{outline:2px solid var(--c); outline-offset:2px;}
+.lp-opt.on{border-color:var(--c); background:var(--c);}
+.lp-opt.on::after{content:"✓"; color:#fff; font-size:9.5px; font-weight:800; line-height:1;}
+
+/* Each cell carries its scale label in the markup so a statement can be shown
+   on its own — on the sheet the label is in the header row above, so hide it. */
+.lp-opt-lab{display:none;}
+
+/* --- footer mark --- */
+.lp-foot{text-align:center; margin-top:-3px; line-height:1;}
+.lp-foot .pic-emoji{font-size:13px; opacity:.85;}
+
+/* Pro hides emoji decoration (theme-pro.css); a chip holding ONLY an emoji
+   would linger as an empty square — hide the chip with it. */
+[data-theme="pro"] .lp-tdeco:has(> .pic-emoji),
+[data-theme="pro"] .lp-art:has(> .pic-emoji),
+[data-theme="pro"] .lp-foot:has(> .pic-emoji){display:none;}
+
+/* ============ 6. PRESENTATION MODE ============
+   present.js MOVES one live element onto the slide stage. learning-pattern
+   sends the aim card and then one statement ROW per slide, and asks the stage
+   for a 760×380 box (template slides(): w/h) instead of the 25px strip the row
+   occupies on the sheet. Everything below re-lays the row inside that box: the
+   statement across the top, the scale as one full-height button per point —
+   readable from the back of a classroom and still tickable on the board.
+
+   --n / --c / --c2 / --tint come from the row's own style attribute, which is
+   why a moved row still knows its scale width and its color. */
+
+.p-slot > .lp-row{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:repeat(var(--n,4),1fr);
+  grid-template-rows:1fr auto;
+  gap:26px 14px;
+  align-content:center;
+  padding:30px 34px 34px;
+  background:#fff;
+  border:2.5px solid var(--c);
+  border-bottom:2.5px solid var(--c);
+  border-radius:20px;
+}
+
+.p-slot > .lp-row > .lp-q{
+  grid-column:1 / -1;
+  align-self:center;
+  gap:16px;
+  padding:0;
+  font-size:27px; font-weight:800; line-height:1.7; color:#22344d;
+}
+.p-slot > .lp-row .lp-q-num{
+  width:44px; height:44px;
+  font-size:20px;
+  border:2px solid var(--c);
+}
+
+.p-slot > .lp-row > .lp-opt{
+  width:auto; height:auto;
+  justify-self:stretch;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  border-width:2.5px;
+  border-radius:16px;
+  padding:16px 10px 18px;
+}
+.p-slot > .lp-row > .lp-opt .lp-opt-lab{
+  display:block;
+  font-size:19px; font-weight:800; line-height:1.5; color:#33475c;
+}
+.p-slot > .lp-row > .lp-opt.on .lp-opt-lab{color:#fff;}
+.p-slot > .lp-row > .lp-opt.on::after{font-size:26px;}
+/* The ✓ is an ::after, so it renders after the label — order it above instead. */
+.p-slot > .lp-row > .lp-opt::after{order:-1;}
+
+/* ============ RESPONSIVE ============ */
+
+@media screen and (max-width:700px){
+  .lp-head{flex-wrap:wrap;}
+  .lp-head-main{flex:1 1 100%; order:-1;}
+  .lp-row{grid-template-columns:1fr repeat(var(--n,4),36px);}
+  .lp-opt-h{font-size:7.6px;}
+  .lp-intro > .lp-bar{width:auto; min-width:0;}
+}
+
+/* ============ 7. KID MODE ============
+   Same information, softer shell: pill bars, pale mint sheet, playful
+   shadows, rounder tick cells. */
+
+[data-theme="playful"][data-template="learning-pattern"]{
+  background:linear-gradient(180deg,#f1faf7,#fdfffe 230px,#fafdfc);
+  border:2px solid #d7ede6;
+  border-radius:18px;
+}
+[data-theme="playful"] .lp-card,
+[data-theme="playful"] .lp-meta{
+  border:1.6px solid var(--c2,var(--c));
+  border-radius:14px;
+  box-shadow:0 3px 8px #6faa9a1f;
+}
+[data-theme="playful"] .lp-bar{border-radius:999px;}
+[data-theme="playful"] .lp-badge{border-radius:16px; box-shadow:0 2px 6px #0000000f;}
+[data-theme="playful"] .lp-title{color:#23453e;}
+[data-theme="playful"] .lp-head-row{border-radius:999px;}
+[data-theme="playful"] .lp-opt{border-width:2px;}
+[data-theme="playful"] .lp-opt.on{box-shadow:0 1.5px 3px #0002;}

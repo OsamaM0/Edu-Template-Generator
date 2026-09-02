@@ -1,0 +1,56 @@
+# ============================================================================
+# docker compose up  →  http://localhost:${EDU_PUBLIC_PORT:-8138}
+# ----------------------------------------------------------------------------
+# Every secret comes from .env (copy env.example). Nothing sensitive is written
+# here, because this file is committed and .env is not.
+# ============================================================================
+services:
+  edu-templates:
+    build: .
+    image: edu-templates:latest
+    container_name: edu-templates
+    ports:
+      - "${EDU_PUBLIC_PORT:-8138}:8138"
+
+    # EDU_API_KEY, EDU_PIPELINE_MONGO_URI, EDU_PIPELINE_PAGE_SECRET and the rest
+    # live here. Missing file → compose refuses to start, which is the point.
+    env_file:
+      - .env
+
+    environment:
+      # Fixed for the container regardless of what .env says about the host.
+      PORT: 8138
+      EDU_HOST: 0.0.0.0
+      NODE_ENV: production
+
+    restart: unless-stopped
+
+    volumes:
+      # THE PRODUCT'S MEMORY IS NOT HERE. Issued links, answers and analyses go
+      # to MongoDB (EDU_STORE_DB) — that is what to back up, not these volumes.
+      #
+      # Generated pages survive a rebuild, so links handed out yesterday are
+      # still a cache hit tomorrow.
+      - edu-page-cache:/app/data/cache
+      # A readable copy of each result, and whatever a pre-database deployment
+      # left behind. "npm run store:import" reads the latter into MongoDB.
+      - edu-assignments:/app/data/assignments
+      - edu-output:/app/data/output
+      # Author lessons on the host without rebuilding the image.
+      # - ./data/lessons:/app/data/lessons:ro
+
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8138/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  edu-page-cache:
+  edu-assignments:
+  edu-output:

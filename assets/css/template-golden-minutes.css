@@ -1,0 +1,324 @@
+/* ============================================================================
+   template-golden-minutes.css — بطاقة الدقائق الذهبية للحصة
+   ----------------------------------------------------------------------------
+   Layout order:
+     1. sheet + masthead (art · organization lines + title · logo corner)
+     2. shared card chrome + numbered section bars
+     3. session-data grid
+     4. middle row: first-five timeline / readiness checklist
+     5. last-five step strip · bottom row (decision / note / teacher) · visitor
+     6. KID MODE overrides ([data-theme="playful"] …)
+
+   Unscoped rules are the professional look (chrome colored by --accent via
+   tpal; per-block colors survive in --c/--tint per element). Kid mode is a
+   scoped override, so its higher specificity wins regardless of file order.
+   ========================================================================== */
+
+/* ============ 1. SHEET + MASTHEAD ============ */
+
+.page[data-template="golden-minutes"]{
+  background:#fff;
+  border:1px solid #e3eaef;
+  border-radius:12px;
+  padding:10px 10px 9px;
+  display:flex; flex-direction:column; gap:7px;
+  min-height:1123px;                 /* one A4 portrait page at 96dpi */
+}
+@media screen and (max-width:820px){
+  .page[data-template="golden-minutes"]{min-height:0;}
+}
+
+[data-template="golden-minutes"] .gm-head{
+  display:flex; align-items:center; gap:10px;
+  padding:4px 6px 2px;
+}
+.gm-head-side{flex:0 0 96px; min-width:0; display:flex; align-items:center; justify-content:center;}
+.gm-head-main{flex:1; min-width:0; text-align:center; display:flex; flex-direction:column; align-items:center; gap:5px;}
+
+.gm-org{display:flex; flex-direction:column; align-items:center; gap:1px; line-height:1.5;}
+.gm-org b{font-size:15px; font-weight:800; color:#2e3f52;}
+.gm-org i{font-style:normal; font-size:8.6px; font-weight:700; letter-spacing:.6px; color:#8a99ab;}
+
+.gm-title{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:19px; font-weight:800; color:var(--ink); line-height:1.4;
+}
+.gm-tdeco .pic-emoji{font-size:13px;}
+.gm-tdeco .ico{width:14px; height:14px; color:var(--accent);}
+
+/* corner art (leafy branch) */
+.gm-art .gm-art-emoji{font-size:34px;}
+.gm-art img.pic{max-height:70px; max-width:96px;}
+.gm-art .ico{width:40px; height:40px; color:var(--accent);}
+
+/* school badge (top corner) */
+.gm-badge{
+  flex:0 0 auto; width:88px; min-height:86px;
+  background:#fff;
+  border:1.6px solid var(--accent);
+  border-radius:14px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  padding:7px 6px; text-align:center;
+  font-size:9px; font-weight:800; color:var(--accent); line-height:1.5;
+}
+.gm-badge-ic.ico{width:30px; height:30px; color:var(--accent);}
+.gm-badge .pic-emoji{font-size:22px;}
+.gm-badge-deco{line-height:1;}
+.gm-badge-deco .pic-emoji{font-size:10px;}
+
+/* the badge box carrying the school logo instead of icon + text */
+.gm-badge-logo{border:none; box-shadow:none; background:none; padding:0; min-height:0;}
+img.gm-badge-pic{max-width:88px; max-height:88px;}
+.gm-badge-logo .pic-emoji{font-size:46px;}
+.gm-badge-logo .ico{width:52px; height:52px; color:var(--accent);}
+
+/* ============ 2. CARD CHROME + SECTION BARS ============ */
+
+.gm-card{
+  background:#fff;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  padding:7px 8px 8px;
+  break-inside:avoid;
+  min-width:0;
+}
+
+.gm-bar{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  background:linear-gradient(90deg,var(--c),var(--c2,var(--c)));
+  color:#fff;
+  border-radius:9px;
+  padding:4.5px 11px 5.5px;
+  font-size:11px; font-weight:800; line-height:1.4;
+  margin-bottom:7px;
+}
+.gm-bar-num{
+  flex:0 0 auto; width:20px; height:20px; border-radius:50%;
+  background:#fff; color:var(--c);
+  font-size:10.6px; font-weight:800;
+  display:grid; place-items:center;
+}
+/* sections ١ و ٢: the bar is a right-anchored tab, like the reference sheet */
+.gm-sess > .gm-bar, .gm-first > .gm-bar{width:fit-content; min-width:206px; margin-inline-end:auto;}
+
+/* icon chip (soft tinted square) shared by every block */
+.gm-icw{
+  flex:0 0 auto; width:25px; height:25px; border-radius:8px;
+  background:var(--tint);
+  display:grid; place-items:center;
+}
+.gm-icw .ico{width:14px; height:14px; color:var(--c);}
+.gm-icw .pic-emoji{font-size:12px;}
+.gm-icw img.pic{width:16px; height:16px;}
+
+/* writable dotted fills */
+.gm-fill{min-height:15px; width:100%;}
+.gm-line{border-bottom-style:dotted;}
+
+/* ============ 3. SESSION DATA (بيانات الحصة) ============ */
+
+.gm-sess-grid{display:grid; grid-template-columns:1fr 1fr; gap:5px 7px;}
+.gm-field{display:flex; align-items:stretch; gap:6px; min-width:0;}
+.gm-field.gm-wide{grid-column:1 / -1;}
+.gm-f-lab{
+  flex:0 0 auto; min-width:132px;
+  display:flex; align-items:center; gap:6px;
+  font-size:9.8px; font-weight:800; color:#33475c; line-height:1.4;
+}
+.gm-f-val{
+  flex:1; min-width:0; min-height:26px;
+  background:#fbfdfe;
+  border:1.4px solid #e3eaef;
+  border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  padding:3px 9px;
+  font-size:10px; font-weight:800; color:var(--ink); text-align:center; line-height:1.5;
+}
+.gm-f-val .gm-fill{align-self:flex-end;}
+
+/* ============ 4. MIDDLE ROW ============ */
+
+.gm-mid{
+  display:grid; grid-template-columns:1.38fr 1fr;   /* RTL: timeline right, readiness left */
+  gap:7px; align-items:stretch;
+  flex:1;                     /* absorb the sheet's spare height */
+}
+.gm-mid > .gm-card{display:flex; flex-direction:column;}
+
+/* --- first five minutes: rows on a vertical numbered line --- */
+.gm-mins{list-style:none; position:relative; display:flex; flex-direction:column; gap:5px; flex:1; justify-content:space-around;}
+.gm-mins::before{
+  content:""; position:absolute; left:8.5px; top:16px; bottom:16px;
+  width:2px; background:var(--c); opacity:.45;
+}
+.gm-min{display:flex; align-items:center; gap:7px; min-height:30px;}
+.gm-min-lab{
+  flex:0 0 126px; display:flex; align-items:center; gap:6px;
+  font-size:9.8px; font-weight:800; color:var(--c); line-height:1.4;
+}
+.gm-min-tx{
+  flex:1; min-width:0; min-height:27px;
+  background:var(--tint);
+  border-radius:8px;
+  padding:4px 9px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:9.8px; font-weight:700; color:#2e4356; text-align:center; line-height:1.5;
+}
+.gm-min-tx i{font-style:normal; font-size:8.8px; font-weight:600; color:#5d7185;}
+.gm-min-num{
+  flex:0 0 auto; width:19px; height:19px; border-radius:50%;
+  background:var(--c); color:#fff;
+  font-size:10px; font-weight:800;
+  display:grid; place-items:center;
+  position:relative; z-index:1;
+  box-shadow:0 0 0 2.5px #fff;
+}
+
+/* --- checklists (readiness ٣ · decision ٥) --- */
+.gm-ck-list{list-style:none; display:flex; flex-direction:column; flex:1; justify-content:space-around;}
+.gm-ck{
+  display:flex; align-items:center; gap:7px;
+  min-height:31px; padding:2.5px 2px;
+  border-bottom:1px solid #f0f4f8;
+}
+.gm-ck:last-child{border-bottom:none;}
+.gm-ck-tx{flex:1; min-width:0; font-size:9.7px; font-weight:700; color:#33475c; line-height:1.5;}
+.gm-tick{
+  flex:0 0 auto; width:17px; height:17px; border-radius:50%;
+  background:#fff;
+  border:1.8px solid #b8c9d6;
+  padding:0; cursor:pointer; font:inherit;
+  display:grid; place-items:center;
+}
+.gm-tick.on{border-color:var(--c); background:var(--c);}
+.gm-tick.on::after{content:"✓"; color:#fff; font-size:10px; font-weight:800; line-height:1;}
+.gm-ck-deco{margin-top:2px;}
+.gm-ck-deco .pic-emoji{font-size:15px;}
+
+/* ============ 5. LAST FIVE · BOTTOM ROW · VISITOR ============ */
+
+/* --- last five minutes: numbered step strip, step 1 on the right --- */
+.gm-last-grid{
+  position:relative;
+  display:grid; grid-template-columns:repeat(var(--n,5),1fr);
+  gap:7px; padding-top:2px;
+}
+.gm-last-grid::before{
+  content:""; position:absolute; top:12px; left:9%; right:9%;
+  height:2px; background:var(--c); opacity:.45;
+}
+.gm-step{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0;}
+.gm-step-num{
+  width:21px; height:21px; border-radius:50%;
+  background:var(--c); color:#fff;
+  font-size:10.6px; font-weight:800;
+  display:grid; place-items:center;
+  position:relative; z-index:1;
+  box-shadow:0 0 0 2.5px #fff;
+}
+.gm-step-box{
+  width:100%; flex:1; min-height:64px;
+  background:#fff;
+  border:1.4px solid #e0e7ec;
+  border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:space-between; gap:5px;
+  padding:7px 6px 8px; text-align:center;
+}
+.gm-step-tx{font-size:9.4px; font-weight:800; color:#33475c; line-height:1.55;}
+.gm-step-ic{width:28px; height:28px; border-radius:50%;}
+.gm-step-ic .ico{width:16px; height:16px;}
+.gm-step-ic .pic-emoji{font-size:14px;}
+
+/* --- bottom row: decision ٥ LEFT · note ٦ middle · teacher ٧ RIGHT (as the
+   reference sheet lays them). direction:ltr pins DOM order 5→7 left-to-right;
+   the children flip straight back to rtl. --- */
+.gm-bottom{
+  display:grid; grid-template-columns:1fr 1.12fr 1fr;
+  gap:7px; align-items:stretch;
+  direction:ltr;
+}
+.gm-bottom > .gm-card{direction:rtl; display:flex; flex-direction:column;}
+
+/* --- quick note --- */
+.gm-note-bd{position:relative; flex:1; display:flex; flex-direction:column; justify-content:space-evenly; gap:9px; padding:2px 4px 3px;}
+.gm-note-tx{font-size:9.8px; font-weight:600; line-height:1.7; color:#3f5268;}
+.gm-note-deco{position:absolute; left:2px; bottom:-1px; line-height:1;}
+.gm-note-deco .pic-emoji{font-size:15px;}
+
+/* --- teacher block --- */
+.gm-tch-bd{flex:1; display:flex; flex-direction:column; justify-content:space-between; gap:7px; padding:2px 2px 0;}
+.gm-tch-row{display:flex; align-items:center; gap:8px; min-height:33px;}
+.gm-tch-name{
+  flex:1; min-width:0;
+  display:flex; align-items:center; justify-content:center;
+  text-align:center; font-size:11px; font-weight:800; color:var(--ink);
+}
+.gm-tch-ic{width:29px; height:29px; border-radius:9px;}
+.gm-sig{border-top:1.6px dashed #ccd9e4; padding-top:7px; display:flex; flex-direction:column; gap:8px;}
+.gm-sig-row{display:flex; align-items:flex-end; gap:6px; font-size:9.8px; font-weight:800; color:#33475c; line-height:1.5;}
+.gm-sig-row .gm-fill{flex:1; width:auto;}
+b.gm-sig-val{font-weight:800; color:var(--ink);}
+
+/* --- visitor footer --- */
+.gm-vis{
+  display:flex; align-items:center; gap:10px;
+  background:#fff;
+  border:1.5px solid #e0e7ec;
+  border-radius:11px;
+  padding:8px 12px;
+  break-inside:avoid;
+}
+.gm-vis-bd{flex:1; min-width:0; display:flex; flex-direction:column; gap:8px;}
+.gm-vis-title{font-size:10.4px; font-weight:800; color:#33475c; text-align:center; line-height:1.5;}
+.gm-vis-ic{width:34px; height:34px; border-radius:10px;}
+.gm-vis-ic .ico{width:19px; height:19px;}
+
+/* --- footer heart --- */
+.gm-foot{text-align:center; margin-top:-3px; line-height:1;}
+.gm-foot .pic-emoji{font-size:13px; opacity:.85;}
+
+/* Pro hides emoji decoration (theme-pro.css); a chip holding ONLY an emoji
+   would linger as an empty square — hide the chip with it. */
+[data-theme="pro"] .gm-icw:has(> .pic-emoji),
+[data-theme="pro"] .gm-tdeco:has(> .pic-emoji),
+[data-theme="pro"] .gm-badge-deco:has(> .pic-emoji),
+[data-theme="pro"] .gm-ck-deco:has(> .pic-emoji),
+[data-theme="pro"] .gm-note-deco:has(> .pic-emoji),
+[data-theme="pro"] .gm-art:has(> .pic-emoji),
+[data-theme="pro"] .gm-foot:has(> .pic-emoji){display:none;}
+
+/* ============ RESPONSIVE ============ */
+
+@media screen and (max-width:700px){
+  .gm-mid, .gm-bottom, .gm-last-grid, .gm-sess-grid{grid-template-columns:1fr;}
+  .gm-last-grid::before{display:none;}
+  .gm-head{flex-wrap:wrap;}
+  .gm-head-main{flex:1 1 100%; order:-1;}
+  .gm-sess > .gm-bar, .gm-first > .gm-bar{width:auto; min-width:0;}
+  .gm-f-lab{min-width:112px;}
+}
+
+/* ============ 6. KID MODE ============
+   Same information, softer shell: pill bars, pale mint sheet, playful
+   shadows in each block's own color. */
+
+[data-theme="playful"][data-template="golden-minutes"]{
+  background:linear-gradient(180deg,#f1faf7,#fdfffe 230px,#fafdfc);
+  border:2px solid #d7ede6;
+  border-radius:18px;
+}
+[data-theme="playful"] .gm-card,
+[data-theme="playful"] .gm-vis{
+  border:1.6px solid var(--c2,var(--c));
+  border-radius:14px;
+  box-shadow:0 3px 8px #6faa9a1f;
+}
+[data-theme="playful"] .gm-bar{border-radius:999px;}
+[data-theme="playful"] .gm-badge{border-radius:16px; box-shadow:0 2px 6px #0000000f;}
+[data-theme="playful"] .gm-title{color:#23453e;}
+[data-theme="playful"] .gm-f-val{border-radius:10px;}
+[data-theme="playful"] .gm-min-tx{border-radius:10px;}
+[data-theme="playful"] .gm-step-box{border-radius:12px; border-color:var(--c2,var(--c));}
+[data-theme="playful"] .gm-step-num,
+[data-theme="playful"] .gm-min-num{box-shadow:0 0 0 2.5px #fff, 0 1.5px 3px #0002;}
+[data-theme="playful"] .gm-tick{border-style:solid;}

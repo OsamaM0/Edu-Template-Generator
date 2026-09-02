@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "badge": "ورقة عمل",
+    "title": "حاجات المخلوقات الحية",
+    "pageTitle": "ورقة عمل — حاجات المخلوقات الحية",
+    "decor": {
+      "right": ["🪴"],
+      "left": ["🌳", "🐇"]
+    }
+  },
+  "studentBar": [
+    { "icon": "👤", "label": "اسم الطالب / الطالبة" },
+    { "icon": "🎓", "label": "الصف" },
+    { "icon": "📅", "label": "التاريخ" }
+  ],
+  "info": {
+    "color": "yellow",
+    "rows": [
+      { "icon": "🧪", "label": "المادة", "value": "علوم" },
+      { "icon": "🧑‍🎓", "label": "الصف", "value": "ثاني ابتدائي" },
+      { "icon": "📅", "label": "الفصل الدراسي", "value": "الأول" },
+      { "icon": "📖", "label": "الوحدة", "value": "النبات والحيوان" },
+      { "icon": "🎯", "label": "عنوان الدرس", "value": "حاجات المخلوقات الحية" }
+    ]
+  },
+  "warmup": {
+    "title": "تهيئة",
+    "titleIcon": "💡",
+    "color": "orange",
+    "text": "كل مخلوق حي يحتاج إلى أشياء تساعده على العيش والنمو. ما الأشياء التي تحتاجها أنت لتعيش بصحة وسعادة؟",
+    "mascot": "💧"
+  },
+  "objectives": {
+    "title": "أهداف التعلم",
+    "titleIcon": "🎯",
+    "color": "green",
+    "image": "🌱",
+    "items": [
+      "أتعرف حاجات المخلوقات الحية الأساسية.",
+      "أذكر أمثلة على حاجات الحيوانات والنباتات.",
+      "أصنف حاجات المخلوقات الحية."
+    ]
+  },
+  "sections": [
+    {
+      "type": "choose",
+      "number": 1,
+      "color": "blue",
+      "title": "أختر الإجابة الصحيحة",
+      "instruction": "اختر الحاجة التي يحتاجها الحيوان للبقاء حياً.",
+      "rows": [
+        {
+          "subject": { "image": "🦁", "label": "الأسد" },
+          "options": [
+            { "image": "🪵", "label": "خشب" },
+            { "image": "🥩", "label": "لحم" },
+            { "image": "💧", "label": "ماء" }
+          ]
+        },
+        {
+          "subject": { "image": "🐤", "label": "العصفور" },
+          "options": [
+            { "image": "🪹", "label": "عش" },
+            { "image": "💧", "label": "ماء" },
+            { "image": "🌾", "label": "حبوب" }
+          ]
+        },
+        {
+          "subject": { "image": "🐟", "label": "السمكة" },
+          "options": [
+            { "image": "🌊", "label": "ماء" },
+            { "image": "🌿", "label": "نباتات" },
+            { "image": "🪨", "label": "صخور" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "fill-blank",
+      "number": 2,
+      "color": "sky",
+      "title": "أكمل الفراغ",
+      "instruction": "أكمل الجمل بالكلمة المناسبة من الصندوق.",
+      "wordBank": ["الماء", "الهواء", "الغذاء", "المأوى"],
+      "items": [
+        { "icon": "💧", "text": "تحتاج الحيوانات إلى ___ للشرب." },
+        { "icon": "🌱", "text": "تحتاج النباتات إلى ___ لتنمو." },
+        { "icon": "💨", "text": "تتنفس الحيوانات والإنسان ___." },
+        { "icon": "🪹", "text": "الطيور تبني أعشاشاً لتوفر لها ___." }
+      ]
+    },
+    {
+      "type": "matching",
+      "number": 3,
+      "color": "purple",
+      "title": "صل كل مخلوق حي بحاجته المناسبة",
+      "needs": [
+        { "label": "الماء" },
+        { "label": "الهواء" },
+        { "label": "الغذاء" },
+        { "label": "المأوى" }
+      ],
+      "creatures": [
+        { "image": "🌳", "label": "الشجرة" },
+        { "image": "🐪", "label": "الجمل" },
+        { "image": "👦", "label": "الطفل" },
+        { "image": "🐟", "label": "السمكة" }
+      ]
+    },
+    {
+      "type": "classify",
+      "number": 4,
+      "color": "orange",
+      "span": 2,
+      "title": "صنف الحاجات التالية إلى:",
+      "chips": ["الماء", "الضوء", "السمك", "الهواء", "الصخور", "الغذاء"],
+      "columns": [
+        { "title": "حاجات حية", "subtitle": "(تتنفس وتنمو)", "icon": "🫁", "color": "green", "lines": 3 },
+        { "title": "حاجات غير حية", "subtitle": "(لا تتنفس)", "icon": "🪨", "color": "orange", "lines": 3 }
+      ]
+    },
+    {
+      "type": "drawing",
+      "number": 5,
+      "color": "teal",
+      "title": "نشاط تفكير ورسم:",
+      "instruction": "ارسم مخلوقاً حياً واذكر حاجتين يحتاجهما ليعيش.",
+      "deco": "✏️",
+      "labels": ["الحاجة الأولى", "الحاجة الثانية"]
+    },
+    {
+      "type": "signatures",
+      "color": "blue",
+      "entries": [
+        { "icon": "🖋️", "role": "المعلم / المعلمة", "name": "" },
+        { "icon": "🖋️", "role": "مدير / مديرة المدرسة", "name": "" }
+      ]
+    },
+    {
+      "type": "self-assessment",
+      "color": "purple",
+      "title": "تقييم ذاتي",
+      "titleIcon": "⭐",
+      "prompt": "لوّن الوجه الذي يعبر عن فهمك للدرس:",
+      "options": [
+        { "icon": "😊", "label": "أفهم جيداً", "color": "green" },
+        { "icon": "😐", "label": "أفهم قليلاً", "color": "yellow" },
+        { "icon": "☹️", "label": "أحتاج لمساعدة", "color": "red" }
+      ]
+    },
+    {
+      "type": "homework",
+      "color": "pink",
+      "title": "واجب منزلي",
+      "titleIcon": "🏠",
+      "text": "ابحث في المنزل أو مع أسرتك عن مخلوق حي (نبات أو حيوان)، واكتب أربع حاجات يحتاجها ليعيش.",
+      "lines": 4
+    }
+  ]
+}

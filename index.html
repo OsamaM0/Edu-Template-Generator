@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ورقة عمل</title>
+<meta name="description" content="أوراق عمل تعليمية تفاعلية">
+<link rel="icon" href="assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Cairo:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/layout.css">
+<link rel="stylesheet" href="assets/css/sections.css">
+<link rel="stylesheet" href="assets/css/template-cards.css">
+<link rel="stylesheet" href="assets/css/template-diff-lesson.css">
+<link rel="stylesheet" href="assets/css/template-golden-minutes.css">
+<link rel="stylesheet" href="assets/css/template-learning-pattern.css">
+<link rel="stylesheet" href="assets/css/theme-pro.css">
+<link rel="stylesheet" href="assets/css/present.css">
+<link rel="stylesheet" href="assets/css/print.css" media="print">
+<script src="config.js"></script>
+<script src="assets/js/guard.js"></script>
+</head>
+<body>
+
+<!-- The worksheet renders here. Same markup the single-file prototype produced. -->
+<div class="page" id="app" hidden></div>
+
+<!-- Loading / error states (Arabic). Controlled by assets/js/main.js -->
+<div class="state" id="state" role="status" aria-live="polite">
+  <div class="state-card">
+    <div class="state-spinner" id="state-spinner"></div>
+    <div class="state-icon" id="state-icon" hidden></div>
+    <h1 class="state-title" id="state-title">جارٍ تحميل ورقة العمل…</h1>
+    <p class="state-text" id="state-text"></p>
+    <pre class="state-code" id="state-code" hidden></pre>
+    <a class="state-btn" id="state-btn" href="./" hidden>العودة للورقة الافتراضية</a>
+  </div>
+</div>
+
+<div class="toolbar no-print" id="toolbar" hidden>
+  <button id="btn-present" type="button" title="وضع العرض على السبورة (F5)">🎬 عرض</button>
+  <button id="btn-print"  type="button" title="طباعة على صفحة A4">🖨️ طباعة</button>
+  <button id="btn-image"  type="button" title="حفظ الورقة كصورة A4 عالية الدقة">🖼️ حفظ صورة</button>
+  <button id="btn-theme"  type="button" title="تبديل النمط بين المرح والاحترافي">🎨 النمط</button>
+  <button id="btn-reset"  type="button" title="إعادة تعيين إجابات الطالب">🔄 إعادة تعيين</button>
+</div>
+
+<script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
