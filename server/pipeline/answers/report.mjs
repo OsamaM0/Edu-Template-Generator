@@ -22,6 +22,7 @@
    layout, the CSS and the print rules stay shared, because a teacher reading
    both should not have to learn two pages.
    ========================================================================== */
+import config from "../config.mjs";
 import { BANDS } from "./analyze.mjs";
 
 const esc = s => String(s == null ? "" : s)
@@ -31,6 +32,18 @@ const esc = s => String(s == null ? "" : s)
 /** JSON safe to sit inside a <script> / <pre> block. */
 const jsonForPage = v => JSON.stringify(v, null, 2)
   .replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
+
+/**
+ * The whole analysis, verbatim, at the bottom of the page — a debugging aid and
+ * only that. It carries every question with its model answer, so on a live
+ * deployment it is an answer key one <details> click away from anyone holding
+ * the report link. Off unless EDU_PIPELINE_DEBUG_JSON=1 says otherwise.
+ */
+const rawBlock = analysis => config.debugJson ? `
+  <details>
+    <summary>البيانات الكاملة (JSON)</summary>
+    <pre>${esc(jsonForPage(analysis))}</pre>
+  </details>` : "";
 
 const KIND_LABEL = {
   multiple_choice: "اختيار من متعدد",
@@ -437,10 +450,7 @@ export function renderReport(analysis){
     </div>
   </section>
 
-  <details>
-    <summary>البيانات الكاملة (JSON)</summary>
-    <pre>${esc(jsonForPage(analysis))}</pre>
-  </details>
+  ${rawBlock(analysis)}
 
   <div class="foot">
     ${esc(analysis.assignment_id)} · ${profile

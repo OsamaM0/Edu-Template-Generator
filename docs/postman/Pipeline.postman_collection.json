@@ -115,6 +115,11 @@
       "key": "teacherName",
       "value": "أ. سارة الحارثي",
       "type": "string"
+    },
+    {
+      "key": "subjectName",
+      "value": "المهارات الرقمية",
+      "type": "string"
     }
   ],
   "item": [
@@ -802,6 +807,73 @@
                   "  pm.expect(b.teacher.name).to.be.a(\"string\").and.not.empty;",
                   "});",
                   "console.log(\"header:\", b.school.name, \"·\", b.teacher.name);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET ?subject=… — المادة على الترويسة",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pipeline/document?type=worksheet&document_idx={{documentIdx}}&seed={{seed}}&subject={{subjectName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "pipeline",
+                "document"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "worksheet"
+                },
+                {
+                  "key": "document_idx",
+                  "value": "{{documentIdx}}"
+                },
+                {
+                  "key": "seed",
+                  "value": "{{seed}}"
+                },
+                {
+                  "key": "subject",
+                  "value": "{{subjectName}}",
+                  "description": "اسم المادة — يُطبع في خانة المادة"
+                }
+              ]
+            },
+            "description": "خانة **المادة** تُطبع ما ترسله المنصّة، لا ما تستنتجه القاعدة.\n\nكانت تُشتقّ من وثائق الدرس — `_metadata.content_analysis.subject_area` وما\nشابهه — ثم تُترجم عبر جدول تسميات. كان ذلك تخمينًا هذا الخادم أسوأ من يقوم\nبه، ويخطئ بما يكفي ليكون مشكلة. المنصّة المستدعية تعرف المادة يقينًا،\nفترسلها بجانب رقم الدرس وتُطبع كما أُرسلت.\n\n**القيمة المجرّدة هي الاسم** كالمدرسة والمعلم. ثلاث صيغ: `?subject=…` أو\n`?subject_id=…&subject_name=…` أو `{ \"subject\": { \"id\": …, \"name\": … } }`.\n\n**بلا `subject` تبقى الخانة فارغة وقابلة للكتابة** — سطر يكتبه المعلم، تمامًا\nكخانة المدرسة. ولا تعود إلى القاعدة إطلاقًا.\n\n**جزء من مفتاح التخزين**: مادتان لا تتقاسمان صفحة واحدة. تُحفظ على الورقة\nالمُصدَرة وعلى سجلّ المستند، وتُطبع على نسخة الطالب في `/a/<id>` كما طُبعت\nعلى نسخة المعلم."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"built (200 cached, or 201 fresh)\", () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const b = pm.response.json();",
+                  "pm.test(\"carries a key and a page url\", () => {",
+                  "  pm.expect(b).to.have.property(\"key\");",
+                  "  pm.expect(b).to.have.property(\"url\");",
+                  "});",
+                  "// The url is already signed when the server has EDU_PIPELINE_PAGE_SECRET set —",
+                  "// store it whole so \"Open the page\" needs no token wrangling.",
+                  "pm.collectionVariables.set(\"docKey\", b.key);",
+                  "pm.collectionVariables.set(\"pageUrl\", b.url);",
+                  "console.log(b.type, \"| key:\", b.key, \"| cached:\", b.cached, \"| used:\", JSON.stringify(b.used));",
+                  "console.log(\"page:\", b.url);",
+                  "if (b.warnings) console.log(\"warnings:\", b.warnings.join(\" | \"));",
+                  "pm.test(\"the subject came back as sent\", () => {",
+                  "  pm.expect(b.subject.name).to.eql(pm.variables.get(\"subjectName\"));",
+                  "});",
+                  "console.log(\"subject:\", b.subject.name);"
                 ]
               }
             }

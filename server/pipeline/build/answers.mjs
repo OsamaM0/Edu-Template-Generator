@@ -10,7 +10,7 @@ import { sample, sampleInOrder } from "../rng.mjs";
 import { interleave } from "./cards.mjs";
 import {
   kindOf, answerWithLetter, answerText, difficultyLabel, cognitiveLabel,
-  optionLabel, subjectLabel, accentFor, subtitleFor, studentLabel, schoolRow, examDateRow
+  optionLabel, subjectName, accentFor, subtitleFor, studentLabel, schoolRow, examDateRow
 } from "./common.mjs";
 
 export const type = "answers";
@@ -114,14 +114,14 @@ export function build(lesson, ctx){
       age: ctx.theme,
       color: accentFor(lesson.documentIdx),
       badge: "بطاقات الإجابة النموذجية",
-      subtitle: subtitleFor(lesson),
+      subtitle: subtitleFor(lesson, ctx),
       lessonLabel: "الدرس",
       lessonTitle: lesson.title,
       pageTitle: `بطاقات الإجابة — ${lesson.title}`
     },
     subject: {
       icon: "book",
-      title: subjectLabel(lesson.subject) || "الدرس",
+      title: subjectName(ctx) || "الدرس",
       subtitle: lesson.title
     },
     metaBar,

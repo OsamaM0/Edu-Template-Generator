@@ -164,6 +164,7 @@ These change the page itself, so each one produces its own cached page.
 | `print` / `image` | `false` | open the print dialog / save the A4 image once painted |
 | `title` | *(from the sheet)* | override `<title>` |
 | `exam_date` | *(blank)* | the day the sheet is sat — fills the date field every template carries (see below) |
+| `subject` | *(blank)* | the subject — fills the **المادة** row (see below) |
 | `school` | *(blank)* | the school's name — fills the **المدرسة** row (see below) |
 | `teacher` | *(blank)* | the teacher's name — fills the **المعلم / المعلمة** row (see below) |
 | `refresh` | `false` | rebuild even if a cached page exists |
@@ -273,28 +274,69 @@ school it came from and who set it.
 
 ### Editable fields on the page
 
-The header identity fields — **school**, **teacher**, and the lesson **title / subject** — render as
-editable on the built page *when the request did not name them*: a teacher clicks and types their
-school and name directly on screen before printing. Pass `school` / `teacher` and those two arrive
-printed and fixed instead. The worksheet's student strip (name, class, date) stays editable as always. No
+The header identity fields — **school**, **teacher**, **المادة** (the subject) and the lesson
+**title** — render as editable on the built page *when the request did not name them*: a teacher
+clicks and types their school, name and subject directly on screen before printing. Pass `school` /
+`teacher` / `subject` and those three arrive printed and fixed instead. The worksheet's student strip (name, class, date) stays editable as always. No
 parameter needed. Edits are per-session — reopening the page starts blank — since the page is shared
 and cached.
 
-### The subject line
+### The subject line — **المادة**
 
-**المادة** is read from the lesson's own documents: `_metadata.content_analysis.subject_area`
-first, and any other `subject` / `subject_name` / `material` / `course` field they carry, wherever
-it sits. The value is printed in Arabic whichever language it was stored in — `science`, `علوم` and
-`Science / Grade 2` all print **العلوم**, `Digital Skills` prints **المهارات الرقمية** — and a
-subject the label table has never seen is printed as the database wrote it rather than dropped.
+`subject` is **the value the المادة row prints**, on every document type, and it comes from the
+request:
 
-A document whose only subject is the placeholder `general` falls back to the subject named in its
-filename, so `علوم - الصف الثاني.pdf` prints **العلوم** instead of **عام**. `GET
-/api/pipeline/lesson/:document_idx` returns both halves — `subject` as stored, `subjectName` as
-printed — which is where to look when a sheet says something unexpected.
+```bash
+curl "…/document?type=worksheet&document_idx=43617&subject=المهارات الرقمية"
+```
 
-Pages already built keep the subject they were built with: `?refresh=1` rebuilds one, `DELETE
-/api/pipeline/cache` clears the lot.
+```json
+{
+  "type": "worksheet", "document_idx": "43617",
+  "subject": { "id": "SUB-204", "name": "المهارات الرقمية" }
+}
+```
+
+Same three spellings as the school and the teacher — `?subject=…`,
+`?subject_id=…&subject_name=…`, or a nested `{ "subject": { "id": …, "name": … } }` — and the same
+rule: **a bare `?subject=` is the NAME**. `material` and `course` are accepted as aliases for the
+name. The id is stored and echoed back untouched; nothing is looked up.
+
+> **This replaced a database lookup.** المادة used to be *derived* from the lesson documents —
+> `_metadata.content_analysis.subject_area` and any other `subject` / `subject_name` / `material` /
+> `course` field they carried, wherever it sat, mapped through an Arabic label table (`science`,
+> `علوم` and `Science / Grade 2` all printed **العلوم**). That was a guess this server is in the
+> worst position to make, and it was wrong often enough to matter. The platform asking for the
+> sheet knows the subject for certain, so it sends it beside the lesson id and we print that.
+>
+> **Send no `subject` and the المادة row is blank and editable** — a line for a teacher to write
+> on, exactly like المدرسة. It does **not** fall back to the database. A caller that has not
+> started sending `subject` will see that row empty; that is the intended behaviour, not a
+> regression.
+
+Where it lands, per type:
+
+| Type | Row |
+|---|---|
+| `worksheet`, `summary` | the **المادة** header row — filled and locked when named, blank and editable when not |
+| `cards`, `answers` | the sheet subtitle (`answers` also uses it as the subject-block title) |
+| `lesson-plan` | added to the info block, but **only** when named — a plan prints values, not blank lines |
+| `golden-minutes` | **المادة والصف** on the session block |
+
+It is **part of the cache key**: two subjects asking for the same lesson must not be served one
+another's page, and a request that names none prints a blank line, which is a third page. It comes
+back as `subject` on the response, is stored on the document record and on any assignment issued,
+and rides in the canonical request — so the student's answerable copy at `/a/<id>` prints the same
+المادة the teacher's copy did.
+
+`GET /api/pipeline/lesson/:document_idx` still returns the lesson's own *derived* `subject` /
+`subjectName`. Nothing prints them any more; they survive as the lesson's own description, and the
+document record falls back to the derived value when a caller named none, so a record is never
+blank.
+
+Pages already built keep the value they were built with: `?refresh=1` rebuilds one, `DELETE
+/api/pipeline/cache` clears the lot. `CACHE_VERSION` was bumped to `6` for this change, so every
+page cached before it rebuilds on first request rather than serving the old, guessed value.
 
 ### Branding
 
@@ -1263,6 +1305,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"  
 | `EDU_PIPELINE_PAGE_SECRET` | *(empty)* | HMAC secret for `/t/<key>` links — see above |
 | `EDU_PIPELINE_LINK_TTL_MIN` | `0` | signed-link lifetime; `0` = never expires |
 | `EDU_PIPELINE_PUBLIC_PAGES` | `1` | `0` = `/t/<key>` also needs `X-Api-Key` |
+| `EDU_PIPELINE_DEBUG_JSON` | **`0`** | `1` puts the raw analysis JSON at the bottom of the report and dashboard pages — see below |
+| `EDU_PIPELINE_STUDENT_RESULTS` | **`0`** | `1` shows a student their own mark the moment they submit — see below |
 | `EDU_PIPELINE_CACHE_DIR` | `data/cache` | where built pages live |
 | `EDU_PIPELINE_CACHE_TTL_MIN` | `0` | `0` = a built page never expires |
 | `EDU_PIPELINE_CACHE_MAX` | `2000` | pages kept on disk; oldest evicted |
@@ -1292,6 +1336,35 @@ Missing or weak settings are printed once at boot and listed under `warnings` in
 
 A missing database does not stop the server: the core render API keeps working and only
 `/api/pipeline/*` reports `503`.
+
+### The two production switches
+
+Both default to **off**, and an *absent* variable is off — so a deployment that has never heard of
+either is already in the production posture. `/api/pipeline/health` reports both under `security`,
+which is the one place to check a live server:
+
+```json
+"security": { "debugJson": false, "studentResultsVisible": false }
+```
+
+**`EDU_PIPELINE_DEBUG_JSON`** — with `1`, `/api/pipeline/report/<id>` and
+`/api/pipeline/group/<id>/dashboard` end with a `<details>` block holding the whole analysis, and a
+submit response also carries the delivery internals (`output`, `delivery` — server paths and
+endpoint names). That JSON is every question *with its model answer*, so on a live site it is an
+answer key one click away from anyone holding a report link. Turn it on to debug, and turn it back
+off.
+
+**`EDU_PIPELINE_STUDENT_RESULTS`** — with `0`, the student submits and sees only a receipt: the
+tick, "تم استلام إجاباتك بنجاح. سيقوم معلمك بمراجعتها", and nothing else. `POST /api/pipeline/submit`
+simply does not return `overall`, `goals`, `report`, `profile` or `report_url`, so `assets/js/answer.js`
+has nothing to paint — the page cannot show a mark it was never sent. It does return
+`results_visible: false`, so an integration can tell the difference between "withheld" and "missing".
+
+Nothing else changes: the submission is still graded, stored in `submissions` / `analyses`, written
+to the output directory, printed to the log and POSTed to the configured backend, exactly as
+before. The teacher still reads all of it — `/api/pipeline/result/<id>`, `/report/<id>`, and the
+group dashboard — which take the API key or the assignment's own token. Set it to `1` when you do
+want students to see their own marks.
 
 ---
 

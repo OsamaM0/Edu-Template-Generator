@@ -19,6 +19,7 @@
    Self-contained, like report.mjs — no stylesheet links, no scripts, no fonts
    that have to load. The same file works served, saved and mailed.
    ========================================================================== */
+import config from "../config.mjs";
 import { arabicCount } from "./analyze.mjs";
 
 const esc = s => String(s == null ? "" : s)
@@ -28,6 +29,18 @@ const esc = s => String(s == null ? "" : s)
 /** JSON safe to sit inside a <pre> block. */
 const jsonForPage = v => JSON.stringify(v, null, 2)
   .replace(/</g, "\\u003c").replace(/>/g, "\\u003e");
+
+/**
+ * The whole group analysis, verbatim, at the bottom of the page — a debugging
+ * aid and only that. It carries every student's answers and every model answer,
+ * so on a live deployment it is one <details> click away from anyone holding the
+ * dashboard link. Off unless EDU_PIPELINE_DEBUG_JSON=1 says otherwise.
+ */
+const rawBlock = analysis => config.debugJson ? `
+  <details>
+    <summary>البيانات الكاملة (JSON)</summary>
+    <pre>${esc(jsonForPage(analysis))}</pre>
+  </details>` : "";
 
 const KIND_LABEL = {
   multiple_choice: "اختيار من متعدد",
@@ -512,10 +525,7 @@ export function renderDashboard(analysis){
     </div>
   </section>
 
-  <details>
-    <summary>البيانات الكاملة (JSON)</summary>
-    <pre>${esc(jsonForPage(analysis))}</pre>
-  </details>
+  ${rawBlock(analysis)}
 
   <div class="foot">
     ${esc(g.id)} · ${p.issued} ورقة · ${p.submitted} تسليماً · تم التحليل آلياً — الإجابات المفتوحة تحتاج مراجعة المعلم

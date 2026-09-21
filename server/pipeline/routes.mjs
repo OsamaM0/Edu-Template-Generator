@@ -72,8 +72,8 @@ import { loadLesson, ping, clearLessonCache } from "./source.mjs";
 import { buildDocument, typeDocs, knownTypes, normType } from "./build/index.mjs";
 import { seedFrom } from "./rng.mjs";
 import { pageUrl, verifyPageToken, signingEnabled } from "./sign.mjs";
-import { normalizeStudent, normalizeGroup, normalizeSchool, normalizeTeacher, normalizeExamDate,
-  publicQuestions } from "./build/common.mjs";
+import { normalizeStudent, normalizeGroup, normalizeSchool, normalizeTeacher, normalizeSubjectParam,
+  normalizeExamDate, publicQuestions } from "./build/common.mjs";
 import * as cache from "./cache.mjs";
 
 import * as store from "./answers/store.mjs";
@@ -301,6 +301,40 @@ function readTeacher(body, both){
 }
 
 /**
+ * The SUBJECT — the value the المادة line prints on every document type.
+ *
+ * It arrives here and nowhere else, deliberately. It used to be derived from the
+ * lesson's own documents: `_metadata.content_analysis.subject_area` and any
+ * other subject-ish field they happened to carry, run through an Arabic label
+ * table. That was a guess this server is in the worst position to make, and it
+ * was wrong often enough to matter. The platform asking for the sheet knows the
+ * subject for certain, so it sends it beside the lesson id:
+ *
+ *   ?document_idx=43617&subject=المهارات الرقمية
+ *   ?subject_id=SUB-204&subject_name=المهارات الرقمية
+ *   { "subject": { "id": "SUB-204", "name": "المهارات الرقمية" } }
+ *
+ * Same three spellings as the school and the teacher, and the same rule: a bare
+ * `?subject=` is the NAME, because the name is the half that gets printed. Send
+ * no subject and the line is blank and editable, exactly like the school row —
+ * it is NOT filled in from the database any more.
+ *
+ * It IS part of the cache key: it changes the printed bytes.
+ */
+
+function readSubject(body, both){
+  const nested = (body && typeof body.subject === "object" && !Array.isArray(body.subject)) ? body.subject : null;
+
+  const flat = {
+    id: firstOf(both, ["subject_id", "subjectId", "subjectid"]),
+    name: firstOf(both, ["subject_name", "subjectName", "subjectname", "material", "course"])
+      ?? (typeof both.subject === "string" ? both.subject : undefined)
+  };
+
+  return normalizeSubjectParam(nested ? { ...nested, ...clean(flat) } : flat);
+}
+
+/**
  * When the sheet is sat.
  *
  * Every template carries a date field and every one of them used to print it
@@ -372,6 +406,12 @@ function readRequest(body, query){
 
   const teacher = readTeacher(b, both);
   if (teacher) request.teacher = teacher;
+
+  /* The subject. Printed on the المادة line of every type, so it rides here
+     beside the school and the teacher — and unlike them it replaces something
+     that used to be read out of the lesson documents. */
+  const subject = readSubject(b, both);
+  if (subject) request.subject = subject;
 
   /* The day it is sat, when the caller named one. Printed on the sheet, so it
      rides in the request beside the student rather than beside the group. */
@@ -470,6 +510,7 @@ async function buildPage(request){
       examDate: built.examDate,
       school: built.school,
       teacher: built.teacher,
+      subject: built.subject,
       counts: built.counts,
       color: built.color,
       used: built.used,
@@ -487,7 +528,11 @@ async function buildPage(request){
       await documentStore.record({
         key, built, request: cache.canonicalRequest(request), meta,
         lessonTitle: lesson.title,
-        subject: lesson.subject || null,
+        /* The record's `subject` is what this sheet was filed under, not what it
+           printed. The caller's subject is the authority when there is one;
+           the lesson's own derived subject is kept as the fallback so a record
+           is never blank for a caller that has not started sending it. */
+        subject: (built.subject && built.subject.name) || lesson.subject || null,
         school: request.school || null,
         teacher: request.teacher || null
       });
@@ -551,6 +596,7 @@ async function issueFor(request, pageKey){
     group: request.group || null,
     school: built.school || null,
     teacher: built.teacher || null,
+    subject: built.subject || null,
     examDate: built.examDate || null,
     type: built.type,
     documentIdx: lesson.documentIdx,
@@ -626,6 +672,7 @@ const describe = (origin, key, meta, cached) => ({
   exam_date_text: meta.examDate ? meta.examDate.text : undefined,
   school: meta.school || undefined,
   teacher: meta.teacher || undefined,
+  subject: meta.subject || undefined,
   counts: meta.counts,
   color: meta.color,
   used: meta.used,
@@ -1087,23 +1134,49 @@ async function handleSubmit(req, res, url){
   });
 
   const origin = originOf(req);
+
+  /* THIS RESPONSE IS READ BY THE STUDENT'S BROWSER. It is the one place in the
+     API where the reader is the person being marked, so what it carries is a
+     policy decision rather than a completeness one — see config.showStudentResults.
+
+     Off (the default): the receipt only. No mark, no per-goal breakdown, no
+     report link, so answer.js finds nothing to paint and shows the thank-you
+     panel alone. The analysis is unaffected — it is still graded, stored,
+     printed and delivered, and the teacher still reads all of it through
+     /api/pipeline/result/<id> and /report/<id>, which take the API key. */
+  const urls = assignmentLinks(origin, record);
+  const seen = config.showStudentResults;
+
   return sendJson(res, 201, {
     ok: true,
-    message: "تم استلام إجاباتك وتحليلها. لم يعد هذا الرابط صالحاً.",
+    message: seen
+      ? "تم استلام إجاباتك وتحليلها. لم يعد هذا الرابط صالحاً."
+      : "تم استلام إجاباتك بنجاح. سيقوم معلمك بمراجعتها. لم يعد هذا الرابط صالحاً.",
     assignment_id: record.id,
     student: record.student,
     document_idx: record.documentIdx,
     lesson_title: record.lessonTitle,
     submitted_at: submittedAt,
-    overall: analysis.overall,
-    goals: analysis.goals,
-    report: analysis.report,
-    // Present only on a survey: the dominant style and its advice. answer.js
-    // shows this instead of a mark when it is there.
-    profile: analysis.profile,
-    ...assignmentLinks(origin, record),
-    output: published.output,
-    delivery: published.delivery
+    results_visible: seen,
+    ...(seen ? {
+      overall: analysis.overall,
+      goals: analysis.goals,
+      report: analysis.report,
+      // Present only on a survey: the dominant style and its advice. answer.js
+      // shows this instead of a mark when it is there.
+      profile: analysis.profile,
+      report_url: urls.report_url,
+      result_url: urls.result_url
+    } : {}),
+    answer_url: urls.answer_url,
+    status_url: urls.status_url,
+
+    /* Where the result landed and whether the backend took it. Server paths and
+       internal endpoint names, of no use to the browser that asked — kept for
+       debugging a deployment, and withheld from a production one along with the
+       rest of the internals. The same information is in the logs and in
+       /api/pipeline/result/<id>. */
+    ...(config.debugJson ? { output: published.output, delivery: published.delivery } : {})
   });
 }
 
@@ -1374,7 +1447,12 @@ async function handleHealth(req, res){
       apiKeyRequired: !!API_KEY,
       pageLinksSigned: signingEnabled(),
       linkTtlMinutes: config.linkTtlMs ? config.linkTtlMs / 60_000 : 0,
-      publicPages: config.publicPages
+      publicPages: config.publicPages,
+      /* Both should read false on a production deployment: the first puts the
+         full analysis — model answers included — at the bottom of every report
+         page, the second hands a student their mark the moment they submit. */
+      debugJson: config.debugJson,
+      studentResultsVisible: config.showStudentResults
     },
     /* Where a submitted result goes. Paths and flags only — a token or an
        endpoint's query string would be a credential, and this route is open. */

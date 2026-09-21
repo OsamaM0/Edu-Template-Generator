@@ -94,6 +94,7 @@ export function sameToken(a, b){
  *   student      {id, name, classroom, section}   who it is for
  *   school       {id, name}                       where, as the caller named it
  *   teacher      {id, name}                       who set it, as the caller named them
+ *   subject      {id, name}                       المادة, as the caller named it
  *   request      the canonical build request, so the page can be rebuilt
  *   pageKey      the cache key of the built page
  *   answerKey    the rows the submission is graded against
@@ -131,6 +132,11 @@ export async function issue(input){
     school: input.school || null,
     teacher: input.teacher || null,
     teacherId: input.teacherId || (input.teacher && input.teacher.id) || "",
+
+    /* The subject the sheet was printed under — the value on its المادة line.
+       Stored beside the school for the same reason: it came from the caller,
+       not from the lesson, so nothing downstream can re-derive it. */
+    subject: input.subject || null,
 
     /* When the sheet is sat, as it was printed on it. Stored rather than
        recomputed so a report always quotes the date the student saw, even if
@@ -287,6 +293,7 @@ export const describe = record => ({
   student: record.student,
   school: record.school || null,
   teacher: record.teacher || null,
+  subject: record.subject || null,
   group: record.group || null,
   group_id: record.groupId || "",
   type: record.type,

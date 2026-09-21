@@ -14,7 +14,7 @@
    ========================================================================== */
 import { sample, sampleInOrder, shuffle, pick } from "../rng.mjs";
 import {
-  subjectLabel, accentFor, chunkText, summaryParts, difficultyLabel, studentRows,
+  subjectRow, accentFor, chunkText, summaryParts, difficultyLabel, studentRows,
   schoolRow, teacherRow, examDateRow
 } from "./common.mjs";
 
@@ -127,12 +127,14 @@ export function build(lesson, ctx){
 
     info: [
       { icon: "book",     label: "الموضوع",         value: lesson.title },
-      { icon: "level",    label: "المادة",          value: subjectLabel(lesson.subject) || "—" },
       { icon: "calendar", label: "الزمن",           value: "حصة واحدة (45 دقيقة)" },
       // "الزمن" above is how long the lesson runs; this is the day it runs on.
       ...examDateRow(ctx.examDate),
       /* A plan is printed as values, not as lines to write on, so these appear
-         only when the request named them. */
+         only when the request named them. The subject joins them for exactly
+         that reason: it comes from the request now, and a plan with no subject
+         named is a plan with no المادة row rather than one printing a dash. */
+      ...(ctx.subject ? [subjectRow(ctx.subject)] : []),
       ...(ctx.school ? [schoolRow(ctx.school)] : []),
       ...(ctx.teacher ? [teacherRow(ctx.teacher)] : []),
       // A plan issued for one student names them; a class plan says "طلاب الصف".

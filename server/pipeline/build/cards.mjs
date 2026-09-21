@@ -95,7 +95,7 @@ export function build(lesson, ctx){
       age: ctx.theme,
       color: accentFor(lesson.documentIdx),
       badge: "بطاقات مراجعة تفاعلية",
-      subtitle: subtitleFor(lesson),
+      subtitle: subtitleFor(lesson, ctx),
       lessonLabel: "عنوان الدرس",
       lessonTitle: lesson.title,
       pageTitle: `بطاقات مراجعة — ${lesson.title}`

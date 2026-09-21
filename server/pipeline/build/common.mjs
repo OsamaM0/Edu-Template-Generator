@@ -9,7 +9,6 @@
    through to util.pic() and renders as a grey placeholder box.
    ========================================================================== */
 import { PALETTES } from "../../../assets/js/theme.js";
-import { subjectLabel } from "../subject.mjs";
 
 /* ------------------------------------------------------------------ labels -- */
 
@@ -33,10 +32,14 @@ export const difficultyLabel = d => DIFFICULTY[d] || DIFFICULTY[1];
 export const cognitiveLabel = c => COGNITIVE[String(c || "").toLowerCase()] || "";
 export const kindOf = k => KIND[k] || KIND.short_answer;
 
-/* Subjects arrive in either language and in several spellings — the vocabulary
-   for that lives in ../subject.mjs, which source.mjs reads from too. Re-exported
-   because every builder imports its labels from here. */
-export { subjectLabel };
+/* ../subject.mjs — which read a subject out of the lesson documents and mapped
+   it to an Arabic label — is NO LONGER PART OF WHAT A SHEET PRINTS, and this
+   file no longer re-exports it. المادة now shows the subject the CALLER named
+   (see subjectName / subjectRow below).
+
+   The module is still live: source.mjs uses it to give each lesson its derived
+   `subject` / `subjectName`, which /api/pipeline/lesson/:idx returns and which
+   the document record files when a caller named no subject of its own. */
 
 /* ------------------------------------------------------------------ answers -- */
 
@@ -179,16 +182,61 @@ export function normalizeColor(input){
   return null;
 }
 
+/* ----------------------------------------------------------------- subject -- */
+
+/**
+ * The subject — المادة — as the CALLER named it.
+ *
+ * This is the one header field that is deliberately NOT derived from the lesson
+ * documents. The value that used to fill المادة was guessed out of whatever
+ * subject-ish metadata those documents happened to carry, mapped through an
+ * Arabic label table: right often enough to be trusted, and wrong often enough
+ * to be a problem. The platform asking for the sheet knows the subject for
+ * certain, so it sends it beside the lesson id and we print that.
+ *
+ * A snapshot, like the school and the teacher: printed as sent, never looked up
+ * (see normalizeSchool). Sent as `?subject=العلوم`, as
+ * `?subject_id=…&subject_name=…`, or as `{ "subject": { "id": …, "name": … } }`
+ * — a bare `?subject=` is the NAME, because the name is the half that reaches
+ * the page.
+ *
+ *   { id, name }
+ */
+export const normalizeSubjectParam = input => party(input);
+
+/**
+ * What the المادة line shows, or "" when the request named no subject.
+ *
+ * Reads ctx.subject — the caller's — and NEVER lesson.subject, which is the
+ * database's own derived guess and is no longer printed anywhere.
+ */
+export function subjectName(ctx){
+  return (ctx && ctx.subject && ctx.subject.name) || "";
+}
+
+/**
+ * The المادة row: filled and fixed when the request named a subject, blank and
+ * editable when it did not — the same rule schoolRow and teacherRow follow, so
+ * a classroom copy is still a line somebody writes on.
+ */
+export const subjectRow = (subject, extra = {}) => ({
+  icon: "level",
+  label: "المادة",
+  value: (subject && subject.name) || "",
+  editable: !(subject && subject.name),
+  ...extra
+});
+
 /** The subtitle every generated sheet carries: the subject (no internal id). */
-export function subtitleFor(lesson){
-  return subjectLabel(lesson.subject) || "";
+export function subtitleFor(lesson, ctx){
+  return subjectName(ctx);
 }
 
 /**
  * The info rows shown on a worksheet or lesson-plan header.
- *   · the lesson title and subject — editable, so a teacher can correct them
- *   · school and teacher — printed when the caller named them, blank and
- *     editable when they did not (see schoolRow / teacherRow)
+ *   · the lesson title — editable, so a teacher can correct it
+ *   · the subject, school and teacher — printed when the caller named them, blank
+ *     and editable when they did not (see subjectRow / schoolRow / teacherRow)
  * The internal document_idx is deliberately NOT shown; it is plumbing, not a
  * field a teacher cares about. Editable rows are kept even when empty (they are
  * meant to be filled); non-editable rows are dropped when they have no value.
@@ -199,7 +247,7 @@ export function subtitleFor(lesson){
 export function infoRows(lesson, extra = [], ctx = {}){
   const rows = [
     { icon: "book",   label: "عنوان الدرس",        value: lesson.title,                       editable: true },
-    { icon: "level",  label: "المادة",             value: subjectLabel(lesson.subject),       editable: true },
+    subjectRow(ctx.subject),
     schoolRow(ctx.school),
     teacherRow(ctx.teacher),
     ...studentRows(ctx.student),

@@ -25,8 +25,10 @@ import path from "node:path";
 import config from "./config.mjs";
 
 /* 4: `exam_date` prints into every template's date field.
-   5: `school` and `teacher` print into the header rows that were blank. */
-export const CACHE_VERSION = "5";
+   5: `school` and `teacher` print into the header rows that were blank.
+   6: `subject` fills المادة, which used to be derived from the lesson
+      documents — every page cached under 5 has the old, guessed value on it. */
+export const CACHE_VERSION = "6";
 
 /** Keys reach the filesystem, so nothing but this alphabet is ever accepted. */
 const KEY_RE = /^[A-Za-z0-9_-]{3,160}$/;
@@ -60,6 +62,10 @@ export function canonicalRequest(req){
        that sends one expects it back out of /data/<key> unchanged. */
     school: req.school ? { id: req.school.id || "", name: req.school.name || "" } : null,
     teacher: req.teacher ? { id: req.teacher.id || "", name: req.teacher.name || "" } : null,
+    /* The subject prints on the المادة line of every type, so two subjects
+       asking for the same lesson are two different pages — and a request that
+       names none prints a blank line, which is a third. */
+    subject: req.subject ? { id: req.subject.id || "", name: req.subject.name || "" } : null,
     /* Printed on the sheet, so it belongs to the key: the same worksheet sat
        on two different days is two different pages. The ISO day is what goes
        in for a real date, so "2026-9-15" and "2026-09-15" hash the same; free

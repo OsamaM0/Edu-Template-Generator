@@ -316,9 +316,18 @@ function resultHtml(result){
 }
 
 /**
- * What the student sees afterwards. Their own result, per goal, in the same
+ * What the student sees afterwards.
+ *
+ * A result, when the server sent one: their own mark, per goal, in the same
  * words the teacher's report uses — the point of grading this way is that the
  * student learns which goal to go back to, not just what they scored.
+ *
+ * AND NOTHING BUT THE RECEIPT WHEN IT DID NOT. Whether a student sees their own
+ * mark is the server's decision (EDU_PIPELINE_STUDENT_RESULTS), and a response
+ * carrying no `overall` / `goals` / `profile` / `report_url` IS that decision,
+ * not a failure: resultHtml() renders "" for it and the panel is the tick, the
+ * title and the server's own message. Nothing here should start inferring a
+ * score from what is missing.
  */
 function showDone(result){
   const panel = document.createElement("div");

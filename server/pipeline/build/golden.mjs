@@ -17,7 +17,7 @@
    the same header on every copy.
    ========================================================================== */
 import { pick, sample } from "../rng.mjs";
-import { subjectLabel, accentFor, chunkText, studentLabel } from "./common.mjs";
+import { subjectName, accentFor, chunkText, studentLabel } from "./common.mjs";
 
 export const type = "golden-minutes";
 export const template = "golden-minutes";
@@ -67,7 +67,7 @@ export function build(lesson, ctx){
         ...(ctx.student ? [{ icon: "id", label: "الطالب", value: studentLabel(ctx.student) }] : []),
         // The long form: this row asks for the weekday as well as the date.
         { icon: "calendar", label: "اليوم والتاريخ",           value: ctx.examDate ? ctx.examDate.long : "" },
-        { icon: "book",     label: "المادة والصف",             value: subjectLabel(lesson.subject) },
+        { icon: "book",     label: "المادة والصف",             value: subjectName(ctx) },
         { icon: "clock",    label: "مدة الحصة",                value: "45 دقيقة" },
         { icon: "target",   label: "عنوان الدرس",              value: lesson.title },
         { icon: "bulb",     label: "ناتج التعلم الأساسي",       value: outcome },

@@ -21,6 +21,10 @@
      EDU_PIPELINE_DOC_TTL_MIN     how long a Mongo read is reused      (default 10)
      EDU_PIPELINE_MEM_PAGES       pages held in memory                 (default 64)
      EDU_PIPELINE_PUBLIC_PAGES    "0" makes /t/* need the API key too  (default 1)
+     EDU_PIPELINE_DEBUG_JSON      "1" prints the raw analysis JSON at the bottom
+                                  of the report and dashboard pages   (default OFF)
+     EDU_PIPELINE_STUDENT_RESULTS "1" lets a student see their own mark the
+                                  moment they submit                  (default OFF)
 
    Answer sheets, results and where they go:
      EDU_PIPELINE_ASSIGN_DIR      issued sheets on disk  (default data/assignments)
@@ -54,6 +58,11 @@ const num = (name, fallback) => {
 
 const off = v => v != null && /^(0|false|no|off)$/i.test(String(v));
 const str = name => (process.env[name] || "").trim();
+
+/* The opposite default to off(). Used for the two switches below, which are
+   production-safe when absent: an unset variable must mean "do not expose it",
+   not "expose it", so a deployment that has never heard of them is closed. */
+const on = v => v != null && /^(1|true|yes|on)$/i.test(String(v).trim());
 
 export const config = {
   enabled: !off(process.env.EDU_PIPELINE),
@@ -102,6 +111,29 @@ export const config = {
   backendToken: str("EDU_PIPELINE_BACKEND_TOKEN"),
   backendHeader: process.env.EDU_PIPELINE_BACKEND_HEADER || "Authorization",
   backendTimeoutMs: num("EDU_PIPELINE_BACKEND_TIMEOUT_MS", 8000),
+
+  /* --- what a page is allowed to show --------------------------------------
+     Both default OFF, because both are things production should not be doing
+     and an unset variable is what production looks like. */
+
+  /**
+   * The raw analysis JSON, in a <details> block at the bottom of the report and
+   * the group dashboard. Written for debugging — it is the whole analysis, every
+   * question and every model answer, sitting in view-source — so it belongs on a
+   * developer's machine and nowhere a parent or a student can reach.
+   */
+  debugJson: on(process.env.EDU_PIPELINE_DEBUG_JSON),
+
+  /**
+   * Whether a student sees their own mark the instant they submit.
+   *
+   * Off: the submit response carries the receipt and nothing else — no score, no
+   * per-goal bars, no report link — so answer.js has nothing to paint and shows
+   * the thank-you panel alone. The result is still graded, stored and delivered
+   * exactly as before; only the STUDENT's copy is withheld, and the teacher's
+   * /report and /result are untouched.
+   */
+  showStudentResults: on(process.env.EDU_PIPELINE_STUDENT_RESULTS),
 
   /** Route prefixes owned by this extension. */
   apiPrefix: "/api/pipeline",

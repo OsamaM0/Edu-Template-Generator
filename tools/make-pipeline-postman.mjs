@@ -162,7 +162,8 @@ const collection = {
     { key: "groupName", value: "الخامس/ب — أنواع الجملة", type: "string" },
     { key: "examDate", value: "2026-09-15", type: "string" },
     { key: "schoolName", value: "ثانوية الأمير محمد", type: "string" },
-    { key: "teacherName", value: "أ. سارة الحارثي", type: "string" }
+    { key: "teacherName", value: "أ. سارة الحارثي", type: "string" },
+    { key: "subjectName", value: "المهارات الرقمية", type: "string" }
   ],
 
   item: [
@@ -396,6 +397,40 @@ const collection = {
             "  pm.expect(b.teacher.name).to.be.a(\"string\").and.not.empty;",
             "});",
             "console.log(\"header:\", b.school.name, \"·\", b.teacher.name);"
+          ])
+        }),
+        req({
+          name: "GET ?subject=… — المادة على الترويسة",
+          path: "/api/pipeline/document",
+          query: [
+            { key: "type", value: "worksheet" },
+            { key: "document_idx", value: "{{documentIdx}}" },
+            { key: "seed", value: "{{seed}}" },
+            { key: "subject", value: "{{subjectName}}", description: "اسم المادة — يُطبع في خانة المادة" }
+          ],
+          description: [
+            "خانة **المادة** تُطبع ما ترسله المنصّة، لا ما تستنتجه القاعدة.",
+            "",
+            "كانت تُشتقّ من وثائق الدرس — `_metadata.content_analysis.subject_area` وما",
+            "شابهه — ثم تُترجم عبر جدول تسميات. كان ذلك تخمينًا هذا الخادم أسوأ من يقوم",
+            "به، ويخطئ بما يكفي ليكون مشكلة. المنصّة المستدعية تعرف المادة يقينًا،",
+            "فترسلها بجانب رقم الدرس وتُطبع كما أُرسلت.",
+            "",
+            "**القيمة المجرّدة هي الاسم** كالمدرسة والمعلم. ثلاث صيغ: `?subject=…` أو",
+            "`?subject_id=…&subject_name=…` أو `{ \"subject\": { \"id\": …, \"name\": … } }`.",
+            "",
+            "**بلا `subject` تبقى الخانة فارغة وقابلة للكتابة** — سطر يكتبه المعلم، تمامًا",
+            "كخانة المدرسة. ولا تعود إلى القاعدة إطلاقًا.",
+            "",
+            "**جزء من مفتاح التخزين**: مادتان لا تتقاسمان صفحة واحدة. تُحفظ على الورقة",
+            "المُصدَرة وعلى سجلّ المستند، وتُطبع على نسخة الطالب في `/a/<id>` كما طُبعت",
+            "على نسخة المعلم."
+          ].join("\n"),
+          tests: BUILD_TESTS.concat([
+            "pm.test(\"the subject came back as sent\", () => {",
+            "  pm.expect(b.subject.name).to.eql(pm.variables.get(\"subjectName\"));",
+            "});",
+            "console.log(\"subject:\", b.subject.name);"
           ])
         }),
         req({

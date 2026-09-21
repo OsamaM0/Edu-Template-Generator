@@ -28,7 +28,7 @@ import * as styles    from "./learning-pattern.mjs";
 
 import { streamFor, seedFrom } from "../rng.mjs";
 import { normalizeColor, PALETTE_NAMES, normalizeStudent, normalizeSchool, normalizeTeacher,
-  normalizeExamDate, answerKeyFor, lessonGoals } from "./common.mjs";
+  normalizeSubjectParam, normalizeExamDate, answerKeyFor, lessonGoals } from "./common.mjs";
 
 const MODULES = [worksheet, cards, answers, lesson, golden, summary, styles];
 
@@ -145,6 +145,11 @@ export function buildDocument(lesson, request){
     // instead of leaving it to be written in by hand.
     school: normalizeSchool(request.school),
     teacher: normalizeTeacher(request.teacher),
+    // The subject, from the request and from nowhere else. It fills the المادة
+    // line every template carries; unnamed, that line stays blank and editable
+    // rather than falling back to a value guessed out of the lesson documents
+    // (see build/common.subjectRow).
+    subject: normalizeSubjectParam(request.subject),
     // The day the sheet is sat, or null. Every builder fills its own date
     // field from this one object, so exam_date reads the same on a worksheet,
     // a card deck, a golden-minutes card and a survey.
@@ -201,6 +206,10 @@ export function buildDocument(lesson, request){
   if (ctx.school) out.data.meta.school = ctx.school;
   if (ctx.teacher) out.data.meta.teacher = ctx.teacher;
 
+  /* Same reason again: the subject was printed into the المادة row, and
+     /data/<key> should read back what it said without parsing that row. */
+  if (ctx.subject) out.data.meta.subject = ctx.subject;
+
   /* The date the page was stamped with, echoed onto the payload so /data/<key>
      and every consumer downstream can read it back without re-parsing the row
      it was printed into. */
@@ -218,6 +227,7 @@ export function buildDocument(lesson, request){
     student: ctx.student,
     school: ctx.school,
     teacher: ctx.teacher,
+    subject: ctx.subject,
     examDate: ctx.examDate,
     answerKey,
     scoring,
